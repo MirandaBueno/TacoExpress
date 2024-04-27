@@ -21,7 +21,6 @@
 #include "Headers/Cylinder.h"
 #include "Headers/Box.h"
 #include "Headers/FirstPersonCamera.h"
-#include "Headers/ThirdPersonCamera.h"
 
 //GLM include
 #define GLM_FORCE_RADIANS
@@ -39,8 +38,6 @@
 
 #include "Headers/AnimationUtils.h"
 
-#include "Headers/Colisiones.h"
-
 #define ARRAY_SIZE_IN_ELEMENTS(a) (sizeof(a)/sizeof(a[0]))
 
 int screenWidth;
@@ -56,11 +53,7 @@ Shader shaderMulLighting;
 //Shader para el terreno
 Shader shaderTerrain;
 
-std::shared_ptr<Camera> camera(new ThirdPersonCamera());
-float distanceFromTarget = 7.0;
-
-Sphere sphereCollider(10, 10);
-Box boxCollider;
+std::shared_ptr<FirstPersonCamera> camera(new FirstPersonCamera());
 
 Sphere skyboxSphere(20, 20);
 Box boxCesped;
@@ -68,7 +61,6 @@ Box boxWalls;
 Box boxHighway;
 Box boxLandingPad;
 Sphere esfera1(10, 10);
-Cylinder rayModel(10, 10, 1.0, 1.0, 1.0);
 // Models complex instances
 Model modelRock;
 Model modelAircraft;
@@ -102,10 +94,14 @@ Model modelBuzzHead;
 Model modelBuzzLeftArm;
 Model modelBuzzLeftForeArm;
 Model modelBuzzLeftHand;
+
 // Lamps
 Model modelLamp1;
 Model modelLamp2;
 Model modelLampPost2;
+// Ejercicio 2
+Model modelLampara;
+
 // Modelos animados
 // Mayow
 Model mayowModelAnimate;
@@ -202,40 +198,51 @@ float rotHelHelBack = 0.0;
 int stateDoor = 0;
 float dorRotCount = 0.0;
 
-// Lamps position
 std::vector<glm::vec3> lamp1Position = {
 	glm::vec3(-7.03, 0, -19.14),
 	glm::vec3(24.41, 0, -34.57),
 	glm::vec3(-10.15, 0, -54.1)
 };
+
 std::vector<float> lamp1Orientation = {
 	-17.0, -82.67, 23.70
 };
+
 std::vector<glm::vec3> lamp2Position = {
 	glm::vec3(-36.52, 0, -23.24),
-	glm::vec3(-52.73, 0, -3.90)
+	glm::vec3(-52.73, 0, -3.90),
+	// Ejercicio 1
+	glm::vec3(-55.25, 0, 46.25),
+	glm::vec3(-49.5, 0, 63),
+	glm::vec3(-29.25, 0, 51.0)
 };
 std::vector<float> lamp2Orientation = {
-	21.37 + 90, -65.0 + 90
+	21.37 + 90, -65.0 + 90, 270 , 0, 90
+};
+// Ejercicio 2
+std::vector<glm::vec3> lamparaPosition = {
+	glm::vec3(30, 0, 30)
+};
+
+std::vector<float> lamparaOrientation = {
+	-17.0
+};
+
+// Ejercicio 4
+std::vector<glm::vec3> spotPosition = {
+
+
 };
 
 double deltaTime;
 double currTime, lastTime;
 
-// variable de salto
-bool isJump = false;
-float GRAVITY = 1.81;
-double tmv = 0; //tiempo en milisegundos
-double startTimeJump = 0;
-
-// Mapa de colliders
-std::map<std::string, std::tuple<AbstractModel::SBB, glm::mat4, glm::mat4>> collidersSBB;
-std::map<std::string, std::tuple<AbstractModel::OBB, glm::mat4, glm::mat4>> collidersOBB;
-
-
 // Variables animacion maquina de estados eclipse
 const float avance = 0.1;
 const float giroEclipse = 0.5f;
+
+float avanceLambo = 0.2f;
+float giroLambo = -0.5f;
 
 // Se definen todos las funciones.
 void reshapeCallback(GLFWwindow* Window, int widthRes, int heightRes);
@@ -243,7 +250,6 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action,
 	int mode);
 void mouseCallback(GLFWwindow* window, double xpos, double ypos);
 void mouseButtonCallback(GLFWwindow* window, int button, int state, int mod);
-void scrollCallback(GLFWwindow* window, double xoffset, double yoffset);
 void init(int width, int height, std::string strTitle, bool bFullScreen);
 void destroy();
 bool processInput(bool continueApplication = true);
@@ -285,7 +291,6 @@ void init(int width, int height, std::string strTitle, bool bFullScreen) {
 	glfwSetKeyCallback(window, keyCallback);
 	glfwSetCursorPosCallback(window, mouseCallback);
 	glfwSetMouseButtonCallback(window, mouseButtonCallback);
-	glfwSetScrollCallback(window, scrollCallback);
 	glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);
 
 	// Init glew
@@ -312,17 +317,6 @@ void init(int width, int height, std::string strTitle, bool bFullScreen) {
 	skyboxSphere.init();
 	skyboxSphere.setShader(&shaderSkybox);
 	skyboxSphere.setScale(glm::vec3(20.0f, 20.0f, 20.0f));
-
-	sphereCollider.init();
-	sphereCollider.setShader(&shader);
-
-	boxCollider.init();
-	boxCollider.setShader(&shader);
-	boxCollider.setColor(glm::vec4(0.3, 0.0, 0.3, 1.0));
-
-	rayModel.init();
-	rayModel.setShader(&shader);
-	rayModel.setColor(glm::vec4(1.0));
 
 	boxCesped.init();
 	boxCesped.setShader(&shaderMulLighting);
@@ -408,13 +402,17 @@ void init(int width, int height, std::string strTitle, bool bFullScreen) {
 	modelBuzzLeftHand.loadModel("../models/buzz/buzzlightyLeftHand.obj");
 	modelBuzzLeftHand.setShader(&shaderMulLighting);
 
-	//Lamps models
+	// Lamps
 	modelLamp1.loadModel("../models/Street-Lamp-Black/objLamp.obj");
 	modelLamp1.setShader(&shaderMulLighting);
 	modelLamp2.loadModel("../models/Street_Light/Lamp.obj");
 	modelLamp2.setShader(&shaderMulLighting);
 	modelLampPost2.loadModel("../models/Street_Light/LampPost.obj");
 	modelLampPost2.setShader(&shaderMulLighting);
+	// Ejercicio 2
+	modelLampara.loadModel("../models/Lampara/Lampara.obj");
+	modelLampara.setShader(&shaderMulLighting);
+
 
 	// Mayow
 	mayowModelAnimate.loadModel("../models/mayow/personaje2.fbx");
@@ -437,8 +435,6 @@ void init(int width, int height, std::string strTitle, bool bFullScreen) {
 	terrain.setShader(&shaderTerrain);
 
 	camera->setPosition(glm::vec3(0.0, 3.0, 4.0));
-	camera->setDistanceFromTarget(distanceFromTarget);
-	camera->setSensitivity(1.0);
 
 	// Carga de texturas para el skybox
 	Texture skyboxTexture = Texture("");
@@ -701,8 +697,6 @@ void destroy() {
 	boxHighway.destroy();
 	boxLandingPad.destroy();
 	esfera1.destroy();
-	sphereCollider.destroy();
-	boxCollider.destroy();
 
 	// Custom objects Delete
 	modelAircraft.destroy();
@@ -737,13 +731,11 @@ void destroy() {
 	modelLamp1.destroy();
 	modelLamp2.destroy();
 	modelLampPost2.destroy();
+	modelLampara.destroy();
 	mayowModelAnimate.destroy();
 	cowboyModelAnimate.destroy();
 	guardianModelAnimate.destroy();
 	cyborgModelAnimate.destroy();
-	rayModel.destroy();
-
-
 
 	// Terrains objects Delete
 	terrain.destroy();
@@ -789,11 +781,6 @@ void mouseCallback(GLFWwindow* window, double xpos, double ypos) {
 	lastMousePosY = ypos;
 }
 
-void scrollCallback(GLFWwindow* window, double xoffset, double yoffset) {
-	distanceFromTarget -= yoffset;
-	camera->setDistanceFromTarget(distanceFromTarget);
-}
-
 void mouseButtonCallback(GLFWwindow* window, int button, int state, int mod) {
 	if (state == GLFW_PRESS) {
 		switch (button) {
@@ -816,11 +803,16 @@ bool processInput(bool continueApplication) {
 		return false;
 	}
 
+	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+		camera->moveFrontCamera(true, deltaTime * 3);
+	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+		camera->moveFrontCamera(false, deltaTime * 3);
+	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+		camera->moveRightCamera(false, deltaTime * 3);
+	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+		camera->moveRightCamera(true, deltaTime * 3);
 	if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS)
-		camera->mouseMoveCamera(offsetX, 0.0, deltaTime);
-	if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS)
-		camera->mouseMoveCamera(0.0, offsetY, deltaTime);
-
+		camera->mouseMoveCamera(offsetX, offsetY, deltaTime);
 	offsetX = 0;
 	offsetY = 0;
 
@@ -974,13 +966,6 @@ bool processInput(bool continueApplication) {
 		animationMayowIndex = 0;
 	}
 
-	bool keySpaceStatus = glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS;
-	if (keySpaceStatus && !isJump) {
-		isJump = true;
-		startTimeJump = currTime;
-		tmv = 0;
-	}
-
 	glfwPollEvents();
 	return continueApplication;
 }
@@ -988,13 +973,16 @@ bool processInput(bool continueApplication) {
 void applicationLoop() {
 	bool psi = true;
 
-	glm::vec3 axis;
-	glm::vec3 target;
-	float angleTarget;
-
 	modelMatrixEclipse = glm::translate(modelMatrixEclipse, glm::vec3(27.5, 0, 30.0));
 	modelMatrixEclipse = glm::rotate(modelMatrixEclipse, glm::radians(180.0f), glm::vec3(0, 1, 0));
 	int state = 0;
+	int stateLambo = 0;
+	int numberAdvanceLambo = 0;
+	int maxAdvanceLambo = 0.0;
+	float advanceCountLambo = 0.0;
+	float rotWheelsXLambo = 0.0;
+	float rotWheelsYLambo = 0.0;
+	float rotCountLambo = 0.0;
 	float advanceCount = 0.0;
 	float rotCount = 0.0;
 	float rotWheelsX = 0.0;
@@ -1053,27 +1041,6 @@ void applicationLoop() {
 
 		glm::mat4 projection = glm::perspective(glm::radians(45.0f),
 			(float)screenWidth / (float)screenHeight, 0.01f, 100.0f);
-
-		if (modelSelected == 1) {
-			axis = glm::axis(glm::quat_cast(modelMatrixDart));
-			angleTarget = glm::angle(glm::quat_cast(modelMatrixDart));
-			target = modelMatrixDart[3];
-		}
-		else {
-			axis = glm::axis(glm::quat_cast(modelMatrixMayow));
-			angleTarget = glm::angle(glm::quat_cast(modelMatrixMayow));
-			target = modelMatrixMayow[3];
-		}
-
-		if (std::isnan(angleTarget))
-			angleTarget = 0.0;
-		if (axis.y < 0)
-			angleTarget = -angleTarget;
-		if (modelSelected == 1)
-			angleTarget -= glm::radians(90.0f);
-		camera->setCameraTarget(target);
-		camera->setAngleTarget(angleTarget);
-		camera->updateCamera();
 		glm::mat4 view = camera->getViewMatrix();
 
 		// Settea la matriz de vista y projection al shader con solo color
@@ -1114,12 +1081,13 @@ void applicationLoop() {
 		/*******************************************
 		 * Propiedades SpotLights
 		 *******************************************/
-		shaderMulLighting.setInt("spotLightCount", 1);
-		shaderTerrain.setInt("spotLightCount", 1);
+		shaderMulLighting.setInt("spotLightCount", 2);
+		shaderTerrain.setInt("spotLightCount", 2);
+
 		glm::vec3 spotPosition = glm::vec3(modelMatrixHeli * glm::vec4(0.0, 0.2, 1.75, 1.0));
 		shaderMulLighting.setVectorFloat3("spotLights[0].light.ambient", glm::value_ptr(glm::vec3(0.0, 0.0, 0.0)));
-		shaderMulLighting.setVectorFloat3("spotLights[0].light.diffuse", glm::value_ptr(glm::vec3(0.2, 0.2, 0.2)));
-		shaderMulLighting.setVectorFloat3("spotLights[0].light.specular", glm::value_ptr(glm::vec3(0.3, 0.3, 0.3)));
+		shaderMulLighting.setVectorFloat3("spotLights[0].light.diffuse", glm::value_ptr(glm::vec3(0.5, 0.5, 0.5)));
+		shaderMulLighting.setVectorFloat3("spotLights[0].light.specular", glm::value_ptr(glm::vec3(0.7, 0.7, 0.7)));
 		shaderMulLighting.setVectorFloat3("spotLights[0].position", glm::value_ptr(spotPosition));
 		shaderMulLighting.setVectorFloat3("spotLights[0].direction", glm::value_ptr(glm::vec3(0, -1, 0)));
 		shaderMulLighting.setFloat("spotLights[0].constant", 1.0);
@@ -1128,21 +1096,44 @@ void applicationLoop() {
 		shaderMulLighting.setFloat("spotLights[0].cutOff", cos(glm::radians(12.5f)));
 		shaderMulLighting.setFloat("spotLights[0].outerCutOff", cos(glm::radians(15.0f)));
 		shaderTerrain.setVectorFloat3("spotLights[0].light.ambient", glm::value_ptr(glm::vec3(0.0, 0.0, 0.0)));
-		shaderTerrain.setVectorFloat3("spotLights[0].light.diffuse", glm::value_ptr(glm::vec3(0.2, 0.2, 0.2)));
-		shaderTerrain.setVectorFloat3("spotLights[0].light.specular", glm::value_ptr(glm::vec3(0.3, 0.3, 0.3)));
+		shaderTerrain.setVectorFloat3("spotLights[0].light.diffuse", glm::value_ptr(glm::vec3(0.5, 0.5, 0.5)));
+		shaderTerrain.setVectorFloat3("spotLights[0].light.specular", glm::value_ptr(glm::vec3(0.7, 0.7, 0.7)));
 		shaderTerrain.setVectorFloat3("spotLights[0].position", glm::value_ptr(spotPosition));
 		shaderTerrain.setVectorFloat3("spotLights[0].direction", glm::value_ptr(glm::vec3(0, -1, 0)));
 		shaderTerrain.setFloat("spotLights[0].constant", 1.0);
 		shaderTerrain.setFloat("spotLights[0].linear", 0.07);
 		shaderTerrain.setFloat("spotLights[0].quadratic", 0.03);
-		shaderTerrain.setFloat("spotLights[0].cutOff", cos(glm::radians(12.5f)));
+		shaderTerrain.setFloat("spotLights[0].cutOff", cos(glm::radians(5.0f)));
 		shaderTerrain.setFloat("spotLights[0].outerCutOff", cos(glm::radians(15.0f)));
+
+		//glm::vec3 spotPositionL = glm::vec3(modelMatrixLambo * glm::vec4(0.7, 0.5, 2.4, 1.0));
+		glm::vec3 spotPositionL = glm::vec3(0, 1, 0);
+		shaderMulLighting.setVectorFloat3("spotLights[1].light.ambient", glm::value_ptr(glm::vec3(0.0, 0.0, 0.0)));
+		shaderMulLighting.setVectorFloat3("spotLights[1].light.diffuse", glm::value_ptr(glm::vec3(0.5, 0.5, 0.5)));
+		shaderMulLighting.setVectorFloat3("spotLights[1].light.specular", glm::value_ptr(glm::vec3(0.7, 0.7, 0.7)));
+		shaderMulLighting.setVectorFloat3("spotLights[1].position", glm::value_ptr(spotPositionL));
+		shaderMulLighting.setVectorFloat3("spotLights[1].direction", glm::value_ptr(glm::vec3(0, -0.5, 0.5)));
+		shaderMulLighting.setFloat("spotLights[1].constant", 1.0);
+		shaderMulLighting.setFloat("spotLights[1].linear", 0.07);
+		shaderMulLighting.setFloat("spotLights[1].quadratic", 0.03);
+		shaderMulLighting.setFloat("spotLights[1].cutOff", cos(glm::radians(12.5f)));
+		shaderMulLighting.setFloat("spotLights[1].outerCutOff", cos(glm::radians(15.0f)));
+		shaderTerrain.setVectorFloat3("spotLights[1].light.ambient", glm::value_ptr(glm::vec3(0.0, 0.0, 0.0)));
+		shaderTerrain.setVectorFloat3("spotLights[1].light.diffuse", glm::value_ptr(glm::vec3(0.5, 0.5, 0.5)));
+		shaderTerrain.setVectorFloat3("spotLights[1].light.specular", glm::value_ptr(glm::vec3(0.7, 0.7, 0.7)));
+		shaderTerrain.setVectorFloat3("spotLights[1].position", glm::value_ptr(spotPositionL));
+		shaderTerrain.setVectorFloat3("spotLights[1].direction", glm::value_ptr(glm::vec3(0, -1, 0)));
+		shaderTerrain.setFloat("spotLights[1].constant", 1.0);
+		shaderTerrain.setFloat("spotLights[1].linear", 0.07);
+		shaderTerrain.setFloat("spotLights[1].quadratic", 0.03);
+		shaderTerrain.setFloat("spotLights[1].cutOff", cos(glm::radians(5.0f)));
+		shaderTerrain.setFloat("spotLights[1].outerCutOff", cos(glm::radians(15.0f)));
 
 		/*******************************************
 		 * Propiedades PointLights
 		 *******************************************/
-		shaderMulLighting.setInt("pointLightCount", lamp1Position.size() + lamp2Position.size());
-		shaderTerrain.setInt("pointLightCount", lamp1Position.size() + lamp2Position.size());
+		shaderMulLighting.setInt("pointLightCount", lamp1Position.size() + lamp2Position.size() + lamparaPosition.size());
+		shaderTerrain.setInt("pointLightCount", lamp1Position.size() + lamp2Position.size() + lamparaPosition.size());
 		for (int i = 0; i < lamp1Position.size(); i++) {
 			glm::mat4 matrixAdjustLamp = glm::mat4(1.0);
 			matrixAdjustLamp = glm::translate(matrixAdjustLamp, lamp1Position[i]);
@@ -1186,6 +1177,29 @@ void applicationLoop() {
 			shaderTerrain.setFloat("pointLights[" + std::to_string(lamp1Position.size() + i) + "].constant", 1.0);
 			shaderTerrain.setFloat("pointLights[" + std::to_string(lamp1Position.size() + i) + "].linear", 0.09);
 			shaderTerrain.setFloat("pointLights[" + std::to_string(lamp1Position.size() + i) + "].quadratic", 0.02);
+		}
+
+		for (int i = 0; i < lamparaPosition.size(); i++) {
+			glm::mat4 matrixAdjustLamp = glm::mat4(1.0);
+			matrixAdjustLamp = glm::translate(matrixAdjustLamp, lamparaPosition[i]);
+			matrixAdjustLamp = glm::rotate(matrixAdjustLamp, glm::radians(lamparaOrientation[i]), glm::vec3(0, 1, 0));
+			matrixAdjustLamp = glm::scale(matrixAdjustLamp, glm::vec3(1.0));
+			matrixAdjustLamp = glm::translate(matrixAdjustLamp, glm::vec3(0.75, 5.0, 0));
+			glm::vec3 lampPosition = glm::vec3(matrixAdjustLamp[3]);
+			shaderMulLighting.setVectorFloat3("pointLights[" + std::to_string(lamp1Position.size() + lamp2Position.size() + i) + "].light.ambient", glm::value_ptr(glm::vec3(0.2, 0.16, 0.01)));
+			shaderMulLighting.setVectorFloat3("pointLights[" + std::to_string(lamp1Position.size() + lamp2Position.size() + i) + "].light.diffuse", glm::value_ptr(glm::vec3(0.4, 0.32, 0.02)));
+			shaderMulLighting.setVectorFloat3("pointLights[" + std::to_string(lamp1Position.size() + lamp2Position.size() + i) + "].light.specular", glm::value_ptr(glm::vec3(0.6, 0.58, 0.03)));
+			shaderMulLighting.setVectorFloat3("pointLights[" + std::to_string(lamp1Position.size() + lamp2Position.size() + i) + "].position", glm::value_ptr(lampPosition));
+			shaderMulLighting.setFloat("pointLights[" + std::to_string(lamp1Position.size() + lamp2Position.size() + i) + "].constant", 1.0);
+			shaderMulLighting.setFloat("pointLights[" + std::to_string(lamp1Position.size() + lamp2Position.size() + i) + "].linear", 0.09);
+			shaderMulLighting.setFloat("pointLights[" + std::to_string(lamp1Position.size() + lamp2Position.size() + i) + "].quadratic", 0.02);
+			shaderTerrain.setVectorFloat3("pointLights[" + std::to_string(lamp1Position.size() + lamp2Position.size() + i) + "].light.ambient", glm::value_ptr(glm::vec3(0.2, 0.16, 0.01)));
+			shaderTerrain.setVectorFloat3("pointLights[" + std::to_string(lamp1Position.size() + lamp2Position.size() + i) + "].light.diffuse", glm::value_ptr(glm::vec3(0.4, 0.32, 0.02)));
+			shaderTerrain.setVectorFloat3("pointLights[" + std::to_string(lamp1Position.size() + lamp2Position.size() + i) + "].light.specular", glm::value_ptr(glm::vec3(0.6, 0.58, 0.03)));
+			shaderTerrain.setVectorFloat3("pointLights[" + std::to_string(lamp1Position.size() + lamp2Position.size() + i) + "].position", glm::value_ptr(lampPosition));
+			shaderTerrain.setFloat("pointLights[" + std::to_string(lamp1Position.size() + lamp2Position.size() + i) + "].constant", 1.0);
+			shaderTerrain.setFloat("pointLights[" + std::to_string(lamp1Position.size() + lamp2Position.size() + i) + "].linear", 0.09);
+			shaderTerrain.setFloat("pointLights[" + std::to_string(lamp1Position.size() + lamp2Position.size() + i) + "].quadratic", 0.02);
 		}
 
 		/*******************************************
@@ -1262,25 +1276,49 @@ void applicationLoop() {
 
 		// Lambo car
 		glDisable(GL_CULL_FACE);
+		modelMatrixLambo[3][1] = terrain.getHeightTerrain(modelMatrixLambo[3][0], modelMatrixLambo[3][2]);
 		glm::mat4 modelMatrixLamboChasis = glm::mat4(modelMatrixLambo);
-		modelMatrixLamboChasis[3][1] = terrain.getHeightTerrain(modelMatrixLamboChasis[3][0], modelMatrixLamboChasis[3][2]);
 		modelMatrixLamboChasis = glm::scale(modelMatrixLamboChasis, glm::vec3(1.3, 1.3, 1.3));
 		modelLambo.render(modelMatrixLamboChasis);
 		glActiveTexture(GL_TEXTURE0);
 		glm::mat4 modelMatrixLamboLeftDor = glm::mat4(modelMatrixLamboChasis);
-		modelMatrixLamboLeftDor = glm::translate(modelMatrixLamboLeftDor, glm::vec3(1.08866, 0.705743, 0.968917));
+
+		glm::mat4 modelMatrixFrontalLeftWheelsLambo = glm::mat4(modelMatrixLamboChasis);
+		modelMatrixFrontalLeftWheelsLambo = glm::translate(modelMatrixFrontalLeftWheelsLambo, glm::vec3(0.96747, 0.377562, 1.39857));
+		modelMatrixFrontalLeftWheelsLambo = glm::rotate(modelMatrixFrontalLeftWheelsLambo, rotWheelsYLambo, glm::vec3(0, 1, 0));
+		modelMatrixFrontalLeftWheelsLambo = glm::rotate(modelMatrixFrontalLeftWheelsLambo, rotWheelsXLambo, glm::vec3(1, 0, 0));
+		modelMatrixFrontalLeftWheelsLambo = glm::translate(modelMatrixFrontalLeftWheelsLambo, glm::vec3(-0.96747, -0.377562, -1.39857));
+		modelLamboFrontLeftWheel.render(modelMatrixFrontalLeftWheelsLambo);
+
+		glm::mat4 modelMatrixFrontalRightWheelsLambo = glm::mat4(modelMatrixLamboChasis);
+		modelMatrixFrontalRightWheelsLambo = glm::translate(modelMatrixFrontalRightWheelsLambo, glm::vec3(0.96747, 0.377562, 1.39857));
+		modelMatrixFrontalRightWheelsLambo = glm::rotate(modelMatrixFrontalRightWheelsLambo, rotWheelsYLambo, glm::vec3(0, 1, 0));
+		modelMatrixFrontalRightWheelsLambo = glm::rotate(modelMatrixFrontalRightWheelsLambo, rotWheelsXLambo, glm::vec3(1, 0, 0));
+		modelMatrixFrontalRightWheelsLambo = glm::translate(modelMatrixFrontalRightWheelsLambo, glm::vec3(-0.96747, -0.377562, -1.39857));
+		modelLamboFrontRightWheel.render(modelMatrixFrontalRightWheelsLambo);
+
+		glm::mat4 modelMatrixRearLeftWheelsLambo = glm::mat4(modelMatrixLamboChasis);
+		modelMatrixRearLeftWheelsLambo = glm::translate(modelMatrixRearLeftWheelsLambo, glm::vec3(0.969207, 0.400968, -1.59792));
+		modelMatrixRearLeftWheelsLambo = glm::rotate(modelMatrixRearLeftWheelsLambo, rotWheelsYLambo, glm::vec3(0, 1, 0));
+		modelMatrixRearLeftWheelsLambo = glm::rotate(modelMatrixRearLeftWheelsLambo, rotWheelsXLambo, glm::vec3(1, 0, 0));
+		modelMatrixRearLeftWheelsLambo = glm::translate(modelMatrixRearLeftWheelsLambo, glm::vec3(-0.969207, -0.400968, 1.59792));
+		modelLamboRearLeftWheel.render(modelMatrixRearLeftWheelsLambo);
+
+		glm::mat4 modelMatrixRearRightWheelsLambo = glm::mat4(modelMatrixLamboChasis);
+		modelMatrixRearRightWheelsLambo = glm::translate(modelMatrixRearRightWheelsLambo, glm::vec3(0.969207, 0.400968, -1.59792));
+		modelMatrixRearRightWheelsLambo = glm::rotate(modelMatrixRearRightWheelsLambo, rotWheelsYLambo, glm::vec3(0, 1, 0));
+		modelMatrixRearRightWheelsLambo = glm::rotate(modelMatrixRearRightWheelsLambo, rotWheelsXLambo, glm::vec3(1, 0, 0));
+		modelMatrixRearRightWheelsLambo = glm::translate(modelMatrixRearRightWheelsLambo, glm::vec3(-0.969207, -0.400968, 1.59792));
+		modelLamboRearRightWheel.render(modelMatrixRearRightWheelsLambo);
+
+		modelMatrixLamboLeftDor = glm::translate(modelMatrixLamboLeftDor, glm::vec3(1.0871, 0.781043, 0.919577));
 		modelMatrixLamboLeftDor = glm::rotate(modelMatrixLamboLeftDor, glm::radians(dorRotCount), glm::vec3(1.0, 0, 0));
-		modelMatrixLamboLeftDor = glm::translate(modelMatrixLamboLeftDor, glm::vec3(-1.08866, -0.705743, -0.968917));
+		modelMatrixLamboLeftDor = glm::translate(modelMatrixLamboLeftDor, glm::vec3(-1.0871, -0.781043, -0.919577));
 		modelLamboLeftDor.render(modelMatrixLamboLeftDor);
 		modelLamboRightDor.render(modelMatrixLamboChasis);
-		modelLamboFrontLeftWheel.render(modelMatrixLamboChasis);
-		modelLamboFrontRightWheel.render(modelMatrixLamboChasis);
-		modelLamboRearLeftWheel.render(modelMatrixLamboChasis);
-		modelLamboRearRightWheel.render(modelMatrixLamboChasis);
 		// Se regresa el cull faces IMPORTANTE para las puertas
 		glEnable(GL_CULL_FACE);
 
-		// Render lamp
 		for (int i = 0; i < lamp1Position.size(); i++) {
 			lamp1Position[i].y = terrain.getHeightTerrain(lamp1Position[i].x, lamp1Position[i].z);
 			modelLamp1.setPosition(lamp1Position[i]);
@@ -1288,6 +1326,7 @@ void applicationLoop() {
 			modelLamp1.setOrientation(glm::vec3(0, lamp1Orientation[i], 0));
 			modelLamp1.render();
 		}
+
 		for (int i = 0; i < lamp2Position.size(); i++) {
 			lamp2Position[i].y = terrain.getHeightTerrain(lamp2Position[i].x, lamp2Position[i].z);
 			modelLamp2.setPosition(lamp2Position[i]);
@@ -1298,6 +1337,14 @@ void applicationLoop() {
 			modelLampPost2.setScale(glm::vec3(0.5));
 			modelLampPost2.setOrientation(glm::vec3(0, lamp2Orientation[i], 0));
 			modelLampPost2.render();
+		}
+
+		for (int i = 0; i < lamparaPosition.size(); i++) {
+			lamparaPosition[i].y = terrain.getHeightTerrain(lamparaPosition[i].x, lamparaPosition[i].z);
+			modelLampara.setPosition(lamparaPosition[i]);
+			modelLampara.setScale(glm::vec3(0.5));
+			modelLampara.setOrientation(glm::vec3(0, lamparaOrientation[i], 0));
+			modelLampara.render();
 		}
 
 		// Dart lego
@@ -1352,7 +1399,6 @@ void applicationLoop() {
 		// Se regresa el cull faces IMPORTANTE para la capa
 		glEnable(GL_CULL_FACE);
 
-
 		glm::mat4 modelMatrixTorso = glm::mat4(modelMatrixBuzz);
 		modelMatrixTorso = glm::scale(modelMatrixTorso, glm::vec3(3.0));
 		modelBuzzTorso.render(modelMatrixTorso);
@@ -1393,12 +1439,7 @@ void applicationLoop() {
 		modelMatrixMayow[0] = glm::vec4(ejex, 0.0);
 		modelMatrixMayow[1] = glm::vec4(ejey, 0.0);
 		modelMatrixMayow[2] = glm::vec4(ejez, 0.0);
-		modelMatrixMayow[3][1] = -GRAVITY * tmv * tmv + 3.9 * tmv + terrain.getHeightTerrain(modelMatrixMayow[3][0], modelMatrixMayow[3][2]);
-		tmv = currTime - startTimeJump;
-		if (modelMatrixMayow[3][1] < terrain.getHeightTerrain(modelMatrixMayow[3][0], modelMatrixMayow[3][2])) {
-			isJump = false;
-			modelMatrixMayow[3][1] = terrain.getHeightTerrain(modelMatrixMayow[3][0], modelMatrixMayow[3][2]);
-		}
+		modelMatrixMayow[3][1] = terrain.getHeightTerrain(modelMatrixMayow[3][0], modelMatrixMayow[3][2]);
 		glm::mat4 modelMatrixMayowBody = glm::mat4(modelMatrixMayow);
 		modelMatrixMayowBody = glm::scale(modelMatrixMayowBody, glm::vec3(0.021f));
 		mayowModelAnimate.setAnimationIndex(animationMayowIndex);
@@ -1437,163 +1478,6 @@ void applicationLoop() {
 		glCullFace(oldCullFaceMode);
 		glDepthFunc(oldDepthFuncMode);
 
-		// Creacion de Colliders
-		AbstractModel::SBB rockCollider;
-		glm::mat4 modelMatrixRockCollider = glm::mat4(matrixModelRock);
-		modelMatrixRockCollider = glm::scale(modelMatrixRockCollider, glm::vec3(1.0));
-		modelMatrixRockCollider = glm::translate(modelMatrixRockCollider, modelRock.getSbb().c);
-		rockCollider.c = glm::vec3(modelMatrixRockCollider[3]);
-		rockCollider.ratio = modelRock.getSbb().ratio;
-		addOrUpdateColliders(collidersSBB, "rock", rockCollider, matrixModelRock);
-
-		// Crecion de colliders OBB
-		AbstractModel::OBB aircraftCollider;
-		glm::mat4 modelMatrixAircraftCollider = glm::mat4(modelMatrixAircraft);
-		aircraftCollider.u = glm::quat_cast(modelMatrixAircraftCollider); // Para que no este manipulado por un escalamiento
-		modelMatrixAircraftCollider = glm::scale(modelMatrixAircraftCollider, glm::vec3(1.0));
-		modelMatrixAircraftCollider = glm::translate(modelMatrixAircraftCollider,
-			modelAircraft.getObb().c);
-		aircraftCollider.e = modelAircraft.getObb().e * glm::vec3(1.0);
-		aircraftCollider.c = modelMatrixAircraftCollider[3];
-		addOrUpdateColliders(collidersOBB, "aircraft", aircraftCollider, modelMatrixAircraft);
-
-		AbstractModel::OBB dartCollider;
-		glm::mat4 modelMatrixDartCollider = glm::mat4(modelMatrixDart);
-		dartCollider.u = glm::quat_cast(modelMatrixDartCollider);
-		modelMatrixDartCollider = glm::scale(modelMatrixDartCollider, glm::vec3(0.5));
-		modelMatrixDartCollider = glm::translate(modelMatrixDartCollider,
-			modelDartLegoBody.getObb().c);
-		dartCollider.c = modelMatrixDartCollider[3];
-		dartCollider.e = modelDartLegoBody.getObb().e * 0.5f;
-		addOrUpdateColliders(collidersOBB, "dart", dartCollider, modelMatrixDart);
-
-		// Lamp1 collider
-		for (int i = 0; i < lamp1Position.size(); i++) {
-			AbstractModel::OBB lampCollider;
-			glm::mat4 modelMatrixColliderLamp = glm::mat4(1.0);
-			modelMatrixColliderLamp = glm::translate(modelMatrixColliderLamp, lamp1Position[i]);
-			modelMatrixColliderLamp = glm::rotate(modelMatrixColliderLamp,
-				glm::radians(lamp1Orientation[i]), glm::vec3(0, 1, 0));
-			addOrUpdateColliders(collidersOBB, "lamp1-" + std::to_string(i), lampCollider,
-				modelMatrixColliderLamp);
-			lampCollider.u = glm::quat_cast(modelMatrixColliderLamp);
-			modelMatrixColliderLamp = glm::scale(modelMatrixColliderLamp, glm::vec3(0.5));
-			modelMatrixColliderLamp = glm::translate(modelMatrixColliderLamp,
-				modelLamp1.getObb().c);
-			lampCollider.c = modelMatrixColliderLamp[3];
-			lampCollider.e = modelLamp1.getObb().e * 0.5f;
-			std::get<0>(collidersOBB.find("lamp1-" + std::to_string(i))->second) = lampCollider;
-		}
-
-		// Lamp2 collider
-		for (int i = 0; i < lamp2Position.size(); i++) {
-			AbstractModel::OBB lampCollider;
-			glm::mat4 modelMatrixColliderLamp = glm::mat4(1.0);
-			modelMatrixColliderLamp = glm::translate(modelMatrixColliderLamp, lamp2Position[i]);
-			modelMatrixColliderLamp = glm::rotate(modelMatrixColliderLamp,
-				glm::radians(lamp2Orientation[i]), glm::vec3(0, 1, 0));
-			addOrUpdateColliders(collidersOBB, "lamp2-" + std::to_string(i), lampCollider,
-				modelMatrixColliderLamp);
-			lampCollider.u = glm::quat_cast(modelMatrixColliderLamp);
-			modelMatrixColliderLamp = glm::scale(modelMatrixColliderLamp, glm::vec3(0.5));
-			modelMatrixColliderLamp = glm::translate(modelMatrixColliderLamp,
-				modelLampPost2.getObb().c);
-			lampCollider.c = modelMatrixColliderLamp[3];
-			lampCollider.e = modelLampPost2.getObb().e * 0.5f;
-			std::get<0>(collidersOBB.find("lamp2-" + std::to_string(i))->second) = lampCollider;
-		}
-
-		AbstractModel::OBB mayowCollider;
-		glm::mat4 modelMatrixColliderMayow = glm::mat4(modelMatrixMayow);
-		modelMatrixColliderMayow = glm::rotate(modelMatrixColliderMayow, glm::radians(-90.0f), glm::vec3(1, 0, 0));
-		mayowCollider.u = glm::quat_cast(modelMatrixColliderMayow);
-		modelMatrixColliderMayow = glm::scale(modelMatrixColliderMayow, glm::vec3(0.021f));
-		modelMatrixColliderMayow = glm::translate(modelMatrixColliderMayow,
-			mayowModelAnimate.getObb().c);
-		mayowCollider.e = mayowModelAnimate.getObb().e * 0.021f * 0.75f; // PAra ajustar con los brazos abiertos
-		mayowCollider.c = modelMatrixColliderMayow[3];
-		addOrUpdateColliders(collidersOBB, "mayow", mayowCollider, modelMatrixMayow);
-
-		std::map<std::string, std::tuple<AbstractModel::OBB, glm::mat4, glm::mat4>>::iterator itObb1;
-		std::map<std::string, std::tuple<AbstractModel::OBB, glm::mat4, glm::mat4>>::iterator itObb2;
-		std::map<std::string, std::tuple<AbstractModel::SBB, glm::mat4, glm::mat4>>::iterator itSBB1;
-		std::map<std::string, std::tuple<AbstractModel::SBB, glm::mat4, glm::mat4>>::iterator itSBB2;
-		for (itObb1 = collidersOBB.begin(); itObb1 != collidersOBB.end(); itObb1++) {
-			bool isColision = false;
-			for (itObb2 = collidersOBB.begin(); itObb2 != collidersOBB.end() && !isColision; itObb2++) {
-				if (itObb1 != itObb2 && testOBBOBB(std::get<0>(itObb1->second), std::get<0>(itObb2->second))) {
-					std::cout << "Hay colision entre " << itObb1->first << " y el model " << itObb2->first << std::endl;
-					isColision = true;
-				}
-			}
-		}
-
-		for (itSBB1 = collidersSBB.begin(); itSBB1 != collidersSBB.end(); itSBB1++) {
-			bool isColision = false;
-			for (itObb1 = collidersOBB.begin(); itObb1 != collidersOBB.end() && !isColision; itObb1++) {
-				if (testSphereOBox(std::get<0>(itSBB1->second), std::get<0>(itObb1->second))) {
-					std::cout << "Hay colision entre " << itSBB1->first << " y el objeto " << itObb1->first << std::endl;
-					isColision = true;
-				}
-			}
-		}
-
-
-
-		for (itSBB1 = collidersSBB.begin(); itSBB1 != collidersSBB.end(); itSBB1++) {
-			bool isColision = false;
-			for (itSBB2 = collidersSBB.begin(); itSBB2 != collidersSBB.end() && !isColision; itSBB2++) {
-				if (itSBB1 != itSBB2 && testSphereSphereIntersection(std::get<0>(itSBB1->second), std::get<0>(itSBB2->second))) {
-					std::cout << "Hay colision entre " << itSBB1->first << " y el objeto " << itSBB2->first << std::endl;
-					isColision = true;
-
-				}
-			}
-		}
-
-		// Renders de colliders
-		std::map<std::string, std::tuple<AbstractModel::SBB, glm::mat4, glm::mat4>>::iterator it;
-		for (it = collidersSBB.begin(); it != collidersSBB.end(); it++) {
-			glm::mat4 matrixCollider = glm::mat4(1.0);
-			matrixCollider = glm::translate(matrixCollider, std::get<0>(it->second).c);
-			matrixCollider = glm::scale(matrixCollider, glm::vec3(std::get<0>(it->second).ratio * 2.0));
-			sphereCollider.setColor(glm::vec4(1.0));
-			sphereCollider.enableWireMode();
-			sphereCollider.render(matrixCollider);
-			sphereCollider.enableFillMode();
-		}
-
-		//renders colliders de las OBBs
-		std::map<std::string, std::tuple<AbstractModel::OBB, glm::mat4, glm::mat4>>::iterator itObb;
-		for (itObb = collidersOBB.begin(); itObb != collidersOBB.end(); itObb++) {
-			glm::mat4 matrixCollider = glm::mat4(1.0);
-			matrixCollider = glm::translate(matrixCollider, std::get<0>(itObb->second).c);
-			matrixCollider = matrixCollider * glm::mat4(std::get<0>(itObb->second).u);
-			matrixCollider = glm::scale(matrixCollider, std::get<0>(itObb->second).e * 2.0f);
-			boxCollider.enableWireMode();
-			boxCollider.render(matrixCollider);
-		}
-
-
-		// ray mayow direction
-		glm::mat4 modelMatrixRay = glm::mat4(modelMatrixMayow);
-		modelMatrixRay = glm::translate(modelMatrixRay, glm::vec3(0, 1, 0));
-		float maxDistanceRay = 15.0;
-		glm::vec3 rayDirection = modelMatrixRay[2];
-		glm::vec3 ori = modelMatrixRay[3];
-		glm::vec3 dest = ori + rayDirection * maxDistanceRay;
-		glm::vec3 rmd = ori + rayDirection * (maxDistanceRay / 2.0f);
-		modelMatrixRay[3] = glm::vec4(rmd, 1.0);
-		modelMatrixRay = glm::rotate(modelMatrixRay, glm::radians(90.0f), glm::vec3(1, 0, 0));
-		modelMatrixRay = glm::scale(modelMatrixRay, glm::vec3(0.05, maxDistanceRay, 0.05));
-		rayModel.render(modelMatrixRay);
-
-		for (itSBB1 = collidersSBB.begin(); itSBB1 != collidersSBB.end(); itSBB1++) {
-			float tRint;
-			if (raySphereIntersect(ori, dest, rayDirection, std::get<0>(itSBB1->second), tRint)) {
-				std::cout << "Colision rayo mayow y " << itSBB1->first << std::endl;
-			}
-		}
 
 		// Animaciones por keyframes dart Vader
 		// Para salvar los keyframes
@@ -1749,6 +1633,63 @@ void applicationLoop() {
 			break;
 		}
 
+		/* Maquina de estados Lamborghini*/
+		switch (stateLambo) {
+		case 0:
+			if (numberAdvanceLambo == 0)
+				maxAdvanceLambo = 5.0;
+			else if (numberAdvanceLambo == 1)
+				maxAdvanceLambo = 40.0;
+			else if (numberAdvanceLambo == 2)
+				maxAdvanceLambo = 35.0;
+			else if (numberAdvanceLambo == 3)
+				maxAdvanceLambo = 40.0;
+			else if (numberAdvanceLambo == 4)
+				maxAdvanceLambo = 30;
+			stateLambo = 1;
+			break;
+		case 1:
+
+			modelMatrixLambo = glm::translate(modelMatrixLambo, glm::vec3(0.0f, 0.0f, avanceLambo));
+			advanceCountLambo += avanceLambo;
+			rotWheelsXLambo += 0.05;
+			rotWheelsYLambo -= 0.02;
+			if (rotWheelsYLambo < 0.0)
+				rotWheelsYLambo = 0;
+
+			if (advanceCountLambo > maxAdvanceLambo) {
+				advanceCountLambo = 0;
+				numberAdvanceLambo++;
+				stateLambo = 2;
+				if (numberAdvanceLambo > 4) {
+					stateLambo = 3;
+
+				}
+			}
+			break;
+		case 2://se lee de abajo a arriba, jerarquia de arriba a abajo
+			modelMatrixLambo = glm::translate(modelMatrixLambo, glm::vec3(0.0f, 0.0f, 0.025f));
+			modelMatrixLambo = glm::rotate(modelMatrixLambo, glm::radians(giroLambo),
+				glm::vec3(0, 1, 0));
+			rotCountLambo += giroLambo;
+			rotWheelsXLambo += 0.05;
+			rotWheelsYLambo += 0.02;
+			if (rotWheelsYLambo >= 0.25)
+				rotWheelsYLambo = 0.25;
+
+			if (rotCountLambo <= -90.0f) {
+				stateLambo = 0;
+				rotCountLambo = 0;
+
+			}
+
+			break;
+		default:
+			break;
+
+		}
+
+
 		// Maquina de estado de lambo
 		switch (stateDoor)
 		{
@@ -1782,3 +1723,5 @@ int main(int argc, char** argv) {
 	destroy();
 	return 1;
 }
+
+
