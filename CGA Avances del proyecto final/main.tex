@@ -1,0 +1,297 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage{graphicx}      % include this line if your document contains figures
+\usepackage{epstopdf}
+\usepackage{xcolor, soul}
+%\usepackage[margin=0.05in]{geometry}
+\usepackage{cancel}
+\usepackage{subfigure}
+\usepackage{natbib}        % required for bibliography
+\usepackage{amsmath,amssymb}
+\usepackage{multirow}
+\usepackage{color}
+\usepackage{float}
+\usepackage{booktabs}% http://ctan.org/pkg/booktabs
+\newcommand{\tabitem}{~~\llap{\textbullet}~~}
+\usepackage{tikz}
+\usepackage{enumitem}
+%\usepackage[shortlabels]{enumitem}
+
+\usepackage[margin=1in]{geometry}
+\usepackage[spanish,mexico]{babel}
+
+\usepackage{graphicx}% http://ctan.org/pkg/graphicx
+\usepackage{array}
+
+\renewcommand{\thesection}{\Roman{section}} 
+\renewcommand{\thesubsection}{\thesection.\Roman{subsection}}
+
+%\usepackage[dvipsnames]{xcolor}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% hipervinculos
+\usepackage{hyperref}
+\hypersetup{
+    colorlinks=true,
+    linkcolor=darkgray,
+    filecolor=magenta,      
+    urlcolor=blue,
+    pdftitle={Overleaf Example},
+    pdfpagemode=FullScreen,
+}
+\urlstyle{same}
+
+
+
+%----------------CÓDIGO----------------%
+\usepackage{color}
+\definecolor{gray97}{gray}{.90}
+\definecolor{gray75}{gray}{.40}
+\definecolor{gray45}{gray}{.40}
+\definecolor{vede}{RGB}{50,170,10}
+
+\usepackage{listings}
+\lstset{ frame=Ltb,
+language=C++, %--------lenguaje
+framerule=0pt,
+aboveskip=.1cm,
+framextopmargin=1pt,
+framexbottommargin=1pt,
+framexleftmargin=0.3cm,
+tabsize=4,
+xleftmargin=.05\textwidth, xrightmargin=.05\textwidth,
+framesep=.1pt,
+rulesep=.1pt,
+backgroundcolor=\color{gray97},
+rulesepcolor=\color{black},
+%
+stringstyle=\ttfamily,
+showstringspaces = false,
+%basicstyle=\small\ttfamily \color{red},
+commentstyle=\color{vede},
+keywordstyle=\color{red!80!black},
+%
+numbers=left,
+numbersep=15pt,
+numberstyle=\tiny,
+basicstyle=\small\ttfamily \color{gray45},
+numberfirstline = false,
+breaklines=true,
+%tabsize=5
+}
+
+% minimizar fragmentado de listados
+\lstnewenvironment{listing}[1][]
+{\lstset{#1}\pagebreak[0]}{\pagebreak[0]}
+
+\lstdefinestyle{consola}
+{basicstyle=\scriptsize\bf\ttfamily,
+backgroundcolor=\color{gray75},
+}
+
+
+%%
+
+\spanishdecimal{.}
+%\usepackage{biblatex}
+%\addbibresource{biblio.bib}
+
+
+\begin{document}
+
+%------------------- PORTADA -----------------------------
+
+\begin{center}
+    \begin{figure}[H]
+    \centering
+    \includegraphics[scale=0.2]{unam-escudo.png}
+    \end{figure}
+    \large Universidad Nacional Autónoma de México    \\
+    \Large FACULTAD DE INGENIERÍA\\
+    \rule{15cm}{0.05cm}
+    \vspace{2cm}\\
+%-----Titulo
+    \huge \textbf{Proyecto final}\\
+    \vspace{0.3cm}
+%-----Subtitulo
+    \Large Taco Express\\
+    \vspace{0.5cm}
+\end{center}
+%-----Descripcion
+   % \large Elaborar una presentación que explique mediante organizadores gráficos (mapas mentales, cuadros sinópticos, mapas conceptuales) o infografías el tema 1 Conceptos básicos de Bases de Datos.\\
+    \vspace{1.5cm}
+\begin{center}
+  %  \large Equipo 2\\
+    \Large \textbf{Miranda Bueno Fatima Yolanda}\\
+    
+    \vspace{0.2cm}
+   % \large miranda.bueno1999@gmail.com\\
+   \vspace{0.2cm}
+ %   \large Ingeniería en Computación\\
+    \vspace{0.2cm}
+    \large 315337567\\
+    \vspace{0.2cm}
+    \large Grupo 1\\
+    \vspace{0.2cm}
+  % \large Equipo 2\\
+    \vspace{2cm}
+    \rule{15cm}{0.05cm}
+
+    \vspace{1.5cm}
+    \Large Computación Gráfica Avanzada\\
+    \Large Ing. Reynaldo Martell Avila\\
+    \vspace{0.9cm}
+    \large  15 de Abril, 2024
+    
+    
+\end{center}
+\clearpage
+
+
+\section{Objetivo}
+
+
+\section{Proyecto en Github}
+
+Se hizo seguimiento del proyecto con la plataforma Girhub.\\
+
+\href{https://github.com/MirandaBueno/TacoExpress}{Link al proyecto}
+
+\section{Calendario de actividades}
+
+\begin{center} 
+\begin{tabular}{|m{2cm}|m{2cm}|m{2cm}|m{2cm}|m{2cm}|m{2cm}|m{2cm}|} 
+\multicolumn{7}{c}{Abril}\\
+\hline
+L&M&M&J&V&S&D\\
+\hline
+22&23&24&25&26&27&28\\
+Toma de decisión del proyecto que se va a realizar: Taco Express&&Los modelos se van a crear con Blender, imágenes que se requieren se obtendrán de unsplash, y para los sonidos se usará OpenAL&&Inicio de la elaboración del proyecto final&Creación del proyecto en Visual Studio y se inicio el seguimiento del proyecto en Git y  \href{https://github.com/MirandaBueno/TacoExpress}{Github}&\\
+\hline
+\end{tabular} 
+\end{center}
+
+\begin{center} 
+\begin{tabular}{|m{2cm}|m{2cm}|m{2cm}|m{2cm}|m{2cm}|m{2cm}|m{2cm}|} 
+\multicolumn{7}{c}{Mayo}\\
+\hline
+L&M&M&J&V&S&D\\
+\hline
+29&30&01&02&03&04&05\\
+%Creación de modelos 3D
+%Carga de modelos
+&&&&&&\\
+\hline
+06&07&08&09&10&11&12\\
+%Programación inicial del juego (interacción básica entre modelos, como movimiento o posicionamiento)
+%Implementación inicial de los controles de los modelo
+&&&&&&\\
+\hline
+13&14&15&16&17&18&19\\
+%Refinamiento de modelos y animaciones
+%Programación avanzada, como colisione
+&&&&&&\\
+\hline
+20&21&22&23&24&25&26\\
+%Integración de sonidos
+%Refinamiento final de modelos, programación, animación
+y sonidos
+%Detección y corrección de errores
+&&&&&&\\
+\hline
+27&28&29&30&&&\\
+%Pruebas exhaustivas
+%Presentación del proyecto final
+
+
+&&&&&&\\
+\hline
+\end{tabular} 
+\end{center}
+
+\section{Modelos a crear}
+\begin{itemize}
+    \item personaje principal
+    \item 
+\end{itemize}
+
+\section{Recetas}
+\begin{itemize}
+    \item tacos
+    \begin{itemize}
+        \item tortilla: sacarla de la caja, ponerla en plato
+        \item carne: sacar de caja, cortar en tabla, y freir, poner en tortilla 
+        \item toppings: poner de l molde cebolla, cilantro y salsa
+    \end{itemize}
+    \item chilaquiles
+    \begin{itemize}
+        \item tortilla: sacar, cortar, freir
+        \item salsa
+        \item toppings: cebolla, crema
+    \end{itemize}
+    \item Tamales
+    \begin{itemize}
+        \item poner hoja de platano
+        \item poner masa
+        \item agregar relleno
+        \item envolver
+        \item poner en olla al vapor 
+    \end{itemize}
+    \item Pozole
+    \begin{itemize}
+        \item cortar carne
+        \item poner caldo, maiz y carne en olla
+    \end{itemize}
+    \item agua 
+    \begin{itemize}
+        \item tomar vaso
+        \item sabores: jamaica, horchata
+    \end{itemize}
+    \item 
+\end{itemize}
+
+\section{Conclusión}
+
+%\section*{Referencias}
+
+
+
+%\cite{op}
+
+%\bibliographystyle{apalike}
+
+
+%\bibliography{biblio}
+
+% \begin{enumerate}
+% \setcounter{enumi}{6}
+%     \item 
+% \end{enumerate}
+
+%-----Imagenes
+%\begin{figure}[H]
+%   \centering
+%   \includegraphics[scale=1.0, trim=0cm 0cm 0cm 0cm, clip]{a.png}
+%   \caption{}
+%\end{figure}
+
+
+%-----Código
+%\begin{lstlisting}
+%\end{lstlisting}
+
+
+%-----Tablas
+%\begin{center} 
+%\begin{tabular}{c|c} 
+%\multicolumn{4}{|c|}{columna}
+%\multirow{3}{4em}{renglon}
+%&\\  
+%\hline 
+%\cline{3-8}
+%\end{tabular} 
+%\end{center}
+
+%--- Hyperlinks
+%\href{http://www.overleaf.com}{Something Linky}
+
+\end{document}
