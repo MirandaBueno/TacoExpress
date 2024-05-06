@@ -69,6 +69,7 @@ Model modelCarne;
 Model modelCarneCocida;
 Model modelCarnePicada;
 Model modelCarneCaja;
+Model modelChef;
 
 // Lamps
 Model modelLamp1;
@@ -121,6 +122,7 @@ glm::mat4 modelMatrixCarne = glm::mat4(1.0f);
 glm::mat4 modelMatrixCarneCocida = glm::mat4(1.0f);
 glm::mat4 modelMatrixCarnePicada = glm::mat4(1.0f);
 glm::mat4 modelMatrixCarneCaja = glm::mat4(1.0f);
+glm::mat4 modelMatrixChef = glm::mat4(1.0f);
 
 glm::mat4 modelMatrixMayow = glm::mat4(1.0f);
 glm::mat4 modelMatrixCowboy = glm::mat4(1.0f);
@@ -327,6 +329,9 @@ void init(int width, int height, std::string strTitle, bool bFullScreen) {
 
 	modelCarneCaja.loadModel("../models/taco/cajaCarne.obj");
 	modelCarneCaja.setShader(&shaderMulLighting);
+
+	modelChef.loadModel("../models/chef/chef.obj");
+	modelChef.setShader(&shaderMulLighting);
 	// Lamps
 	modelLamp1.loadModel("../models/Street-Lamp-Black/objLamp.obj");
 	modelLamp1.setShader(&shaderMulLighting);
@@ -630,6 +635,7 @@ void destroy() {
 	modelCarneCocida.destroy();
 	modelCarnePicada.destroy();
 	modelCarneCaja.destroy();
+	modelChef.destroy();
 	modelLamp1.destroy();
 	modelLamp2.destroy();
 	modelLampPost2.destroy();
@@ -812,6 +818,7 @@ void applicationLoop() {
 	modelMatrixCarneCocida= glm::translate(modelMatrixCarneCocida, glm::vec3(0.0, 0.0, 12.0));
 	modelMatrixCarnePicada= glm::translate(modelMatrixCarnePicada, glm::vec3(0.0, 0.0, 22.0));
 	modelMatrixCarneCaja= glm::translate(modelMatrixCarneCaja, glm::vec3(0.0, 0.0, 32.0));
+	modelMatrixChef= glm::translate(modelMatrixChef, glm::vec3(10.0, 0.0, 32.0));
 
 	modelMatrixMayow = glm::translate(modelMatrixMayow, glm::vec3(13.0f, 0.05f, -5.0f));
 	modelMatrixMayow = glm::rotate(modelMatrixMayow, glm::radians(-90.0f), glm::vec3(0, 1, 0));
@@ -1057,6 +1064,9 @@ void applicationLoop() {
 		modelCarnePicada.render(modelMatrixCarnePicada);
 		modelMatrixCarneCaja[3][1] = terrain.getHeightTerrain(modelMatrixCarneCaja[3][0], modelMatrixCarneCaja[3][2]);
 		modelCarneCaja.render(modelMatrixCarneCaja);
+
+		modelMatrixChef[3][1] = terrain.getHeightTerrain(modelMatrixChef[3][0], modelMatrixChef[3][2]);
+		modelChef.render(modelMatrixChef);
 
 		// Forze to enable the unit texture to 0 always ----------------- IMPORTANT
 		glActiveTexture(GL_TEXTURE0);
