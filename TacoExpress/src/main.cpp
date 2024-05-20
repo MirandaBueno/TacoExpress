@@ -60,10 +60,14 @@ Box boxCesped;
 Box boxWalls;
 Box boxHighway;
 Box boxLandingPad;
+Box boxCalle;
+Box boxBanqueta;
+Box boxEdificio;
 Sphere esfera1(10, 10);
 // Models complex instances
 Model modelTortilla;
 Model modelTortillero;
+Model modelFoodTruck;
 
 Model modelCarne;
 Model modelCarneCocida;
@@ -88,9 +92,10 @@ Model guardianModelAnimate;
 // Cybog
 Model cyborgModelAnimate;
 // Terrain model instance
-Terrain terrain(-1, -1, 200, 8, "../Textures/heightmap.png");
+Terrain terrain(-1, -1, 200, 1, "../Textures/heightmap.png");
 
 GLuint textureCespedID, textureWallID, textureWindowID, textureHighwayID, textureLandingPadID;
+GLuint textureCalleID, textureBanquetaID, textureEdificioID;
 GLuint textureTerrainRID, textureTerrainGID, textureTerrainBID, textureTerrainBlendMapID;
 GLuint skyboxTextureID;
 
@@ -102,12 +107,13 @@ GL_TEXTURE_CUBE_MAP_NEGATIVE_Y,
 GL_TEXTURE_CUBE_MAP_POSITIVE_Z,
 GL_TEXTURE_CUBE_MAP_NEGATIVE_Z };
 
-std::string fileNames[6] = { "../Textures/mp_bloodvalley/blood-valley_ft.tga",
-		"../Textures/mp_bloodvalley/blood-valley_bk.tga",
-		"../Textures/mp_bloodvalley/blood-valley_up.tga",
-		"../Textures/mp_bloodvalley/blood-valley_dn.tga",
-		"../Textures/mp_bloodvalley/blood-valley_rt.tga",
-		"../Textures/mp_bloodvalley/blood-valley_lf.tga" };
+std::string fileNames[6] = { "../Textures/mp_bloodvalley/diafront.png",
+		"../Textures/mp_bloodvalley/diafront.png",
+		"../Textures/mp_bloodvalley/diaback.png",
+		"../Textures/mp_bloodvalley/diaback.png",
+		"../Textures/mp_bloodvalley/dialeft.png",
+		"../Textures/mp_bloodvalley/dialeft.png" };
+
 
 bool exitApp = false;
 int lastMousePosX, offsetX = 0;
@@ -115,9 +121,10 @@ int lastMousePosY, offsetY = 0;
 
 // Model matrix definitions
 
-glm::mat4 modelMatrixHeli = glm::mat4(1.0f);
+//glm::mat4 modelMatrixHeli = glm::mat4(1.0f);
 glm::mat4 modelMatrixTortilla = glm::mat4(1.0f);
 glm::mat4 modelMatrixTortillero = glm::mat4(1.0f);
+glm::mat4 modelMatrixFoodTruck = glm::mat4(1.0f);
 glm::mat4 modelMatrixCarne = glm::mat4(1.0f);
 glm::mat4 modelMatrixCarneCocida = glm::mat4(1.0f);
 glm::mat4 modelMatrixCarnePicada = glm::mat4(1.0f);
@@ -125,9 +132,9 @@ glm::mat4 modelMatrixCarneCaja = glm::mat4(1.0f);
 glm::mat4 modelMatrixChef = glm::mat4(1.0f);
 
 glm::mat4 modelMatrixMayow = glm::mat4(1.0f);
-glm::mat4 modelMatrixCowboy = glm::mat4(1.0f);
-glm::mat4 modelMatrixGuardian = glm::mat4(1.0f);
-glm::mat4 modelMatrixCyborg = glm::mat4(1.0f);
+//glm::mat4 modelMatrixCowboy = glm::mat4(1.0f);
+//glm::mat4 modelMatrixGuardian = glm::mat4(1.0f);
+//glm::mat4 modelMatrixCyborg = glm::mat4(1.0f);
 
 int animationMayowIndex = 1;
 float rotDartHead = 0.0, rotDartLeftArm = 0.0, rotDartLeftHand = 0.0, rotDartRightArm = 0.0, rotDartRightHand = 0.0, rotDartLeftLeg = 0.0, rotDartRightLeg = 0.0;
@@ -142,40 +149,40 @@ std::string fileName = "";
 bool record = false;
 
 // Joints interpolations Dart Lego
-std::vector<std::vector<float>> keyFramesDartJoints;
-std::vector<std::vector<glm::mat4>> keyFramesDart;
-int indexFrameDartJoints = 0;
-int indexFrameDartJointsNext = 1;
-float interpolationDartJoints = 0.0;
-int maxNumPasosDartJoints = 20;
-int numPasosDartJoints = 0;
-int indexFrameDart = 0;
-int indexFrameDartNext = 1;
-float interpolationDart = 0.0;
-int maxNumPasosDart = 200;
-int numPasosDart = 0;
+//std::vector<std::vector<float>> keyFramesDartJoints;
+//std::vector<std::vector<glm::mat4>> keyFramesDart;
+//int indexFrameDartJoints = 0;
+//int indexFrameDartJointsNext = 1;
+//float interpolationDartJoints = 0.0;
+//int maxNumPasosDartJoints = 20;
+//int numPasosDartJoints = 0;
+//int indexFrameDart = 0;
+//int indexFrameDartNext = 1;
+//float interpolationDart = 0.0;
+//int maxNumPasosDart = 200;
+//int numPasosDart = 0;
 
 // Joints interpolations Buzz
-std::vector<std::vector<float>> keyFramesBuzzJoints;
-std::vector<std::vector<glm::mat4>> keyFramesBuzz;
-int indexFrameBuzzJoints = 0;
-int indexFrameBuzzJointsNext = 1;
-float interpolationBuzzJoints = 0.0;
-int maxNumPasosBuzzJoints = 20;
-int numPasosBuzzJoints = 0;
-int indexFrameBuzz = 0;
-int indexFrameBuzzNext = 1;
-float interpolationBuzz = 0.0;
-int maxNumPasosBuzz = 100;
-int numPasosBuzz = 0;
-
-// Var animate helicopter
-float rotHelHelY = 0.0;
-float rotHelHelBack = 0.0;
+//std::vector<std::vector<float>> keyFramesBuzzJoints;
+//std::vector<std::vector<glm::mat4>> keyFramesBuzz;
+//int indexFrameBuzzJoints = 0;
+//int indexFrameBuzzJointsNext = 1;
+//float interpolationBuzzJoints = 0.0;
+//int maxNumPasosBuzzJoints = 20;
+//int numPasosBuzzJoints = 0;
+//int indexFrameBuzz = 0;
+//int indexFrameBuzzNext = 1;
+//float interpolationBuzz = 0.0;
+//int maxNumPasosBuzz = 100;
+//int numPasosBuzz = 0;
+//
+//// Var animate helicopter
+//float rotHelHelY = 0.0;
+//float rotHelHelBack = 0.0;
 
 // Var animate lambo dor
-int stateDoor = 0;
-float dorRotCount = 0.0;
+//int stateDoor = 0;
+//float dorRotCount = 0.0;
 
 std::vector<glm::vec3> lamp1Position = {
 	glm::vec3(-7.03, 0, -19.14),
@@ -216,12 +223,12 @@ std::vector<glm::vec3> spotPosition = {
 double deltaTime;
 double currTime, lastTime;
 
-// Variables animacion maquina de estados eclipse
-const float avance = 0.1;
-const float giroEclipse = 0.5f;
-
-float avanceLambo = 0.2f;
-float giroLambo = -0.5f;
+//// Variables animacion maquina de estados eclipse
+//const float avance = 0.1;
+//const float giroEclipse = 0.5f;
+//
+//float avanceLambo = 0.2f;
+//float giroLambo = -0.5f;
 
 // Se definen todos las funciones.
 void reshapeCallback(GLFWwindow* Window, int widthRes, int heightRes);
@@ -300,6 +307,15 @@ void init(int width, int height, std::string strTitle, bool bFullScreen) {
 	boxCesped.init();
 	boxCesped.setShader(&shaderMulLighting);
 
+	boxCalle.init();
+	boxCalle.setShader(&shaderMulLighting);
+
+	boxBanqueta.init();
+	boxBanqueta.setShader(&shaderMulLighting);
+
+	boxEdificio.init();
+	boxEdificio.setShader(&shaderMulLighting);
+
 	boxWalls.init();
 	boxWalls.setShader(&shaderMulLighting);
 
@@ -317,6 +333,9 @@ void init(int width, int height, std::string strTitle, bool bFullScreen) {
 
 	modelTortillero.loadModel("../models/taco/tortillero.obj");
 	modelTortillero.setShader(&shaderMulLighting);
+
+	modelFoodTruck.loadModel("../models/foodTruck/foodTruckinside.obj");
+	modelFoodTruck.setShader(&shaderMulLighting);
 
 	modelCarne.loadModel("../models/taco/carneCruda.obj");
 	modelCarne.setShader(&shaderMulLighting);
@@ -349,22 +368,22 @@ void init(int width, int height, std::string strTitle, bool bFullScreen) {
 	mayowModelAnimate.setShader(&shaderMulLighting);
 
 	// Cowboy
-	cowboyModelAnimate.loadModel("../models/cowboy/Character Running.fbx");
-	cowboyModelAnimate.setShader(&shaderMulLighting);
+	//cowboyModelAnimate.loadModel("../models/cowboy/Character Running.fbx");
+	//cowboyModelAnimate.setShader(&shaderMulLighting);
 
-	// Guardian
-	guardianModelAnimate.loadModel("../models/boblampclean/boblampclean.md5mesh");
-	guardianModelAnimate.setShader(&shaderMulLighting);
+	//// Guardian
+	//guardianModelAnimate.loadModel("../models/boblampclean/boblampclean.md5mesh");
+	//guardianModelAnimate.setShader(&shaderMulLighting);
 
-	// Cyborg
-	cyborgModelAnimate.loadModel("../models/cyborg/cyborg.fbx");
-	cyborgModelAnimate.setShader(&shaderMulLighting);
+	//// Cyborg
+	//cyborgModelAnimate.loadModel("../models/cyborg/cyborg.fbx");
+	//cyborgModelAnimate.setShader(&shaderMulLighting);
 
 	// Terreno
 	terrain.init();
 	terrain.setShader(&shaderTerrain);
 
-	camera->setPosition(glm::vec3(0.0, 3.0, 4.0));
+	camera->setPosition(glm::vec3(-10.0, 10.0, 0.0));
 
 	// Carga de texturas para el skybox
 	Texture skyboxTexture = Texture("");
@@ -510,6 +529,77 @@ void init(int width, int height, std::string strTitle, bool bFullScreen) {
 	// Libera la memoria de la textura
 	textureHighway.freeImage();
 
+	//// Definiendo la textura
+	//Texture textureCalle("../Textures/calle.jpg");
+	//textureCalle.loadImage(); // Cargar la textura
+	//glGenTextures(1, &textureCalleID); // Creando el id de la textura del landingpad
+	//glBindTexture(GL_TEXTURE_2D, textureCalleID); // Se enlaza la textura
+	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT); // Wrapping en el eje u
+	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT); // Wrapping en el eje v
+	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR); // Filtering de minimización
+	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR); // Filtering de maximimizacion
+	//if (textureCalle.getData()) {
+	//	// Transferir los datos de la imagen a la tarjeta
+	//	glTexImage2D(GL_TEXTURE_2D, 0, textureCalle.getChannels() == 3 ? GL_RGB : GL_RGBA, textureCalle.getWidth(), textureCalle.getHeight(), 0,
+	//		textureCalle.getChannels() == 3 ? GL_RGB : GL_RGBA, GL_UNSIGNED_BYTE, textureCalle.getData());
+	//	glGenerateMipmap(GL_TEXTURE_2D);
+	//}
+	//else
+	//	std::cout << "Fallo la carga de textura" << std::endl;
+	//textureCalle.freeImage(); // Liberamos memoria
+
+	
+	Texture textureCalle("../Textures/calle.jpg");
+	textureCalle.loadImage();
+	glGenTextures(1, &textureCalleID);
+	glBindTexture(GL_TEXTURE_2D, textureCalleID);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT); // set texture wrapping to GL_REPEAT (default wrapping method)
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	if (textureCalle.getData()) {
+		glTexImage2D(GL_TEXTURE_2D, 0, textureCalle.getChannels() == 3 ? GL_RGB : GL_RGBA, textureCalle.getWidth(), textureCalle.getHeight(), 0,
+			textureCalle.getChannels() == 3 ? GL_RGB : GL_RGBA, GL_UNSIGNED_BYTE, textureCalle.getData());
+		glGenerateMipmap(GL_TEXTURE_2D);
+	}
+	else
+		std::cout << "Failed to load texture" << std::endl;
+	textureCalle.freeImage();
+
+	Texture textureBanqueta("../Textures/sidewalk.jpg");
+	textureBanqueta.loadImage();
+	glGenTextures(1, &textureBanquetaID);
+	glBindTexture(GL_TEXTURE_2D, textureBanquetaID);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT); // set texture wrapping to GL_REPEAT (default wrapping method)
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	if (textureBanqueta.getData()) {
+		glTexImage2D(GL_TEXTURE_2D, 0, textureBanqueta.getChannels() == 3 ? GL_RGB : GL_RGBA, textureBanqueta.getWidth(), textureBanqueta.getHeight(), 0,
+			textureBanqueta.getChannels() == 3 ? GL_RGB : GL_RGBA, GL_UNSIGNED_BYTE, textureBanqueta.getData());
+		glGenerateMipmap(GL_TEXTURE_2D);
+	}
+	else
+		std::cout << "Failed to load texture" << std::endl;
+	textureBanqueta.freeImage();
+
+	Texture textureEdificio("../Textures/city.jpg");
+	textureEdificio.loadImage();
+	glGenTextures(1, &textureEdificioID);
+	glBindTexture(GL_TEXTURE_2D, textureEdificioID);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT); // set texture wrapping to GL_REPEAT (default wrapping method)
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	if (textureEdificio.getData()) {
+		glTexImage2D(GL_TEXTURE_2D, 0, textureEdificio.getChannels() == 3 ? GL_RGB : GL_RGBA, textureEdificio.getWidth(), textureEdificio.getHeight(), 0,
+			textureEdificio.getChannels() == 3 ? GL_RGB : GL_RGBA, GL_UNSIGNED_BYTE, textureEdificio.getData());
+		glGenerateMipmap(GL_TEXTURE_2D);
+	}
+	else
+		std::cout << "Failed to load texture" << std::endl;
+	textureEdificio.freeImage();
+
 	// Definiendo la textura
 	Texture textureLandingPad("../Textures/landingPad.jpg");
 	textureLandingPad.loadImage(); // Cargar la textura
@@ -606,6 +696,8 @@ void init(int width, int height, std::string strTitle, bool bFullScreen) {
 		std::cout << "Fallo la carga de textura" << std::endl;
 	textureBlendMap.freeImage(); // Liberamos memoria
 
+	
+
 }
 
 void destroy() {
@@ -623,6 +715,9 @@ void destroy() {
 	// Basic objects Delete
 	skyboxSphere.destroy();
 	boxCesped.destroy();
+	boxCalle.destroy();
+	boxBanqueta.destroy();
+	boxEdificio.destroy();
 	boxWalls.destroy();
 	boxHighway.destroy();
 	boxLandingPad.destroy();
@@ -631,6 +726,7 @@ void destroy() {
 	// Custom objects Delete
 	modelTortilla.destroy();
 	modelTortillero.destroy();
+	modelFoodTruck.destroy();
 	modelCarne.destroy();
 	modelCarneCocida.destroy();
 	modelCarnePicada.destroy();
@@ -641,9 +737,9 @@ void destroy() {
 	modelLampPost2.destroy();
 	modelLampara.destroy();
 	mayowModelAnimate.destroy();
-	cowboyModelAnimate.destroy();
+	/*cowboyModelAnimate.destroy();
 	guardianModelAnimate.destroy();
-	cyborgModelAnimate.destroy();
+	cyborgModelAnimate.destroy();*/
 
 	// Terrains objects Delete
 	terrain.destroy();
@@ -659,6 +755,9 @@ void destroy() {
 	glDeleteTextures(1, &textureTerrainGID);
 	glDeleteTextures(1, &textureTerrainRID);
 	glDeleteTextures(1, &textureTerrainBlendMapID);
+	glDeleteTextures(1, &textureCalleID);
+	glDeleteTextures(1, &textureBanquetaID);
+	glDeleteTextures(1, &textureEdificioID);
 
 	// Cube Maps Delete
 	glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
@@ -751,7 +850,7 @@ bool processInput(bool continueApplication) {
 			myfile.close();
 		myfile.open(fileName);
 	}
-	if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_RELEASE
+	/*if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_RELEASE
 		&& glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS) {
 		record = false;
 		myfile.close();
@@ -768,7 +867,7 @@ bool processInput(bool continueApplication) {
 		saveFrame = true;
 		availableSave = false;
 	}if (glfwGetKey(window, GLFW_KEY_ENTER) == GLFW_RELEASE)
-		availableSave = true;
+		availableSave = true;*/
 
 
 	// Controles de mayow
@@ -811,8 +910,10 @@ void applicationLoop() {
 	int numberAdvance = 0;
 	int maxAdvance = 0.0;
 
-	modelMatrixTortilla= glm::translate(modelMatrixTortilla, glm::vec3(-3.0, 0.0, 2.0));
-	modelMatrixTortillero= glm::translate(modelMatrixTortillero, glm::vec3(-3.0, 0.0, 12.0));
+	modelMatrixTortilla = glm::translate(modelMatrixTortilla, glm::vec3(-3.0, 0.0, 2.0));
+	modelMatrixTortillero = glm::translate(modelMatrixTortillero, glm::vec3(-3.0, 0.0, 12.0));
+	modelMatrixFoodTruck = glm::translate(modelMatrixFoodTruck, glm::vec3(1.0, 0.0, 1.0));
+	modelMatrixFoodTruck = glm::scale(modelMatrixFoodTruck, glm::vec3(0.5, 0.5, 0.5));
 
 	modelMatrixCarne= glm::translate(modelMatrixCarne, glm::vec3(0.0, 0.0, 2.0));
 	modelMatrixCarneCocida= glm::translate(modelMatrixCarneCocida, glm::vec3(0.0, 0.0, 12.0));
@@ -823,19 +924,19 @@ void applicationLoop() {
 	modelMatrixMayow = glm::translate(modelMatrixMayow, glm::vec3(13.0f, 0.05f, -5.0f));
 	modelMatrixMayow = glm::rotate(modelMatrixMayow, glm::radians(-90.0f), glm::vec3(0, 1, 0));
 
-	modelMatrixCowboy = glm::translate(modelMatrixCowboy, glm::vec3(13.0, 0.05, 0.0));
+	//modelMatrixCowboy = glm::translate(modelMatrixCowboy, glm::vec3(13.0, 0.05, 0.0));
 
-	modelMatrixGuardian = glm::translate(modelMatrixGuardian, glm::vec3(15, 0.05, 0.0));
-	modelMatrixGuardian = glm::rotate(modelMatrixGuardian, glm::radians(-90.0f), glm::vec3(1.0, 0.0, 0.0));
+	//modelMatrixGuardian = glm::translate(modelMatrixGuardian, glm::vec3(15, 0.05, 0.0));
+	//modelMatrixGuardian = glm::rotate(modelMatrixGuardian, glm::radians(-90.0f), glm::vec3(1.0, 0.0, 0.0));
 
-	modelMatrixCyborg = glm::translate(modelMatrixCyborg, glm::vec3(5.0f, 0.05, 0.0f));
+	//modelMatrixCyborg = glm::translate(modelMatrixCyborg, glm::vec3(5.0f, 0.05, 0.0f));
 
 	// Variables to interpolation key frames
-	fileName = "../animaciones/animation_dart_joints.txt";
+	/*fileName = "../animaciones/animation_dart_joints.txt";
 	keyFramesDartJoints = getKeyRotFrames(fileName);
 	keyFramesDart = getKeyFrames("../animaciones/animation_dart.txt");
 	keyFramesBuzzJoints = getKeyRotFrames("../animaciones/animation_buzz_joints.txt");
-	keyFramesBuzz = getKeyFrames("../animaciones/animation_buzz.txt");
+	keyFramesBuzz = getKeyFrames("../animaciones/animation_buzz.txt");*/
 
 	lastTime = TimeManager::Instance().GetTime();
 
@@ -885,10 +986,10 @@ void applicationLoop() {
 		 * Propiedades Luz direccional
 		 *******************************************/
 		shaderMulLighting.setVectorFloat3("viewPos", glm::value_ptr(camera->getPosition()));
-		shaderMulLighting.setVectorFloat3("directionalLight.light.ambient", glm::value_ptr(glm::vec3(0.05, 0.05, 0.05)));
+		shaderMulLighting.setVectorFloat3("directionalLight.light.ambient", glm::value_ptr(glm::vec3(0.3, 0.3, 0.3)));
 		shaderMulLighting.setVectorFloat3("directionalLight.light.diffuse", glm::value_ptr(glm::vec3(0.3, 0.3, 0.3)));
-		shaderMulLighting.setVectorFloat3("directionalLight.light.specular", glm::value_ptr(glm::vec3(0.4, 0.4, 0.4)));
-		shaderMulLighting.setVectorFloat3("directionalLight.direction", glm::value_ptr(glm::vec3(-1.0, 0.0, 0.0)));
+		shaderMulLighting.setVectorFloat3("directionalLight.light.specular", glm::value_ptr(glm::vec3(0.8, 0.8, 0.8)));
+		shaderMulLighting.setVectorFloat3("directionalLight.direction", glm::value_ptr(glm::vec3(-1.0, -1.0, 0.0)));
 
 		shaderTerrain.setVectorFloat3("viewPos", glm::value_ptr(camera->getPosition()));
 		shaderTerrain.setVectorFloat3("directionalLight.light.ambient", glm::value_ptr(glm::vec3(0.05, 0.05, 0.05)));
@@ -1021,10 +1122,74 @@ void applicationLoop() {
 		}
 
 		/*******************************************
+		 * Calle
+		 *******************************************/
+		boxCalle.setScale(glm::vec3(70.0f, 0.05f, 10.0f));
+		boxCalle.setPosition(glm::vec3(10.0f, 0.0f, 0.0f));
+		boxCalle.setOrientation(glm::vec3(0.0f, 90.0f, 0.0f));
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, textureCalleID);
+		shaderMulLighting.setInt("texture1", 0);
+		//shaderMulLighting.setVectorFloat2("scaleUV", glm::value_ptr(glm::vec2(2.0, 2.0)));
+		boxCalle.render();
+		//shaderMulLighting.setVectorFloat2("scaleUV", glm::value_ptr(glm::vec2(1.0, 1.0)));
+		glBindTexture(GL_TEXTURE_2D, 0);
+
+		boxCalle.setScale(glm::vec3(60.0f, 0.05f, 10.0f));
+		boxCalle.setPosition(glm::vec3(0.0f, 0.0f, 0.0f));
+		boxCalle.setOrientation(glm::vec3(0.0f, 90.0f, 0.0f));
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, textureCalleID);
+		shaderMulLighting.setInt("texture1", 0);
+		//shaderMulLighting.setVectorFloat2("scaleUV", glm::value_ptr(glm::vec2(2.0, 2.0)));
+		boxCalle.render();
+		//shaderMulLighting.setVectorFloat2("scaleUV", glm::value_ptr(glm::vec2(1.0, 1.0)));
+		glBindTexture(GL_TEXTURE_2D, 0);
+
+		boxCalle.setScale(glm::vec3(60.0f, 0.05f, 10.0f));
+		boxCalle.setPosition(glm::vec3(-10.0f, 0.0f, 0.0f));
+		boxCalle.setOrientation(glm::vec3(0.0f, 90.0f, 0.0f));
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, textureCalleID);
+		shaderMulLighting.setInt("texture1", 0);
+		//shaderMulLighting.setVectorFloat2("scaleUV", glm::value_ptr(glm::vec2(2.0, 2.0)));
+		boxCalle.render();
+		//shaderMulLighting.setVectorFloat2("scaleUV", glm::value_ptr(glm::vec2(1.0, 1.0)));
+		glBindTexture(GL_TEXTURE_2D, 0);
+
+		/*******************************************
+		 * Banqueta
+		 *******************************************/
+		boxBanqueta.setScale(glm::vec3(70.0f, 0.5f, 20.0f));
+		boxBanqueta.setPosition(glm::vec3(25.0f, 0.0f, 0.0f));
+		boxBanqueta.setOrientation(glm::vec3(0.0f, 90.0f, 0.0f));
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, textureBanquetaID);
+		shaderMulLighting.setInt("texture1", 0);
+		//shaderMulLighting.setVectorFloat2("scaleUV", glm::value_ptr(glm::vec2(2.0, 2.0)));
+		boxBanqueta.render();
+		//shaderMulLighting.setVectorFloat2("scaleUV", glm::value_ptr(glm::vec2(1.0, 1.0)));
+		glBindTexture(GL_TEXTURE_2D, 0);
+
+		/*******************************************
+		 * Edificio
+		 *******************************************/
+		boxEdificio.setScale(glm::vec3(70.0f, 0.5f, 20.0f));
+		boxEdificio.setPosition(glm::vec3(25.0f, 8.0f, 0.0f));
+		boxEdificio.setOrientation(glm::vec3(90.0f, 90.0f, 0.0f));
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, textureEdificioID);
+		shaderMulLighting.setInt("texture1", 0);
+		//shaderMulLighting.setVectorFloat2("scaleUV", glm::value_ptr(glm::vec2(2.0, 2.0)));
+		boxEdificio.render();
+		//shaderMulLighting.setVectorFloat2("scaleUV", glm::value_ptr(glm::vec2(1.0, 1.0)));
+		glBindTexture(GL_TEXTURE_2D, 0);
+
+		/*******************************************
 		 * Terrain Cesped
 		 *******************************************/
 		 // Se activa la textura del agua
-		glActiveTexture(GL_TEXTURE0);
+		/*glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, textureCespedID);
 		shaderTerrain.setInt("backgroundTexture", 0);
 		glActiveTexture(GL_TEXTURE1);
@@ -1043,7 +1208,7 @@ void applicationLoop() {
 		terrain.setPosition(glm::vec3(100, 0, 100));
 		terrain.render();
 		shaderTerrain.setVectorFloat2("scaleUV", glm::value_ptr(glm::vec2(0, 0)));
-		glBindTexture(GL_TEXTURE_2D, 0);
+		glBindTexture(GL_TEXTURE_2D, 0);*/
 
 		/*******************************************
 		 * Custom objects obj
@@ -1055,6 +1220,9 @@ void applicationLoop() {
 		modelTortilla.render(modelMatrixTortilla);
 		modelMatrixTortillero[3][1] = terrain.getHeightTerrain(modelMatrixTortillero[3][0], modelMatrixTortillero[3][2]);
 		modelTortillero.render(modelMatrixTortillero);
+
+		modelMatrixFoodTruck[3][1] = terrain.getHeightTerrain(modelMatrixFoodTruck[3][0], modelMatrixFoodTruck[3][2]);
+		modelFoodTruck.render(modelMatrixFoodTruck);
 
 		modelMatrixCarne[3][1] = terrain.getHeightTerrain(modelMatrixCarne[3][0], modelMatrixCarne[3][2]);
 		modelCarne.render(modelMatrixCarne);
@@ -1090,7 +1258,7 @@ void applicationLoop() {
 		mayowModelAnimate.render(modelMatrixMayowBody);
 		animationMayowIndex = 1;
 
-		modelMatrixCowboy[3][1] = terrain.getHeightTerrain(modelMatrixCowboy[3][0], modelMatrixCowboy[3][2]);
+		/*modelMatrixCowboy[3][1] = terrain.getHeightTerrain(modelMatrixCowboy[3][0], modelMatrixCowboy[3][2]);
 		glm::mat4 modelMatrixCowboyBody = glm::mat4(modelMatrixCowboy);
 		modelMatrixCowboyBody = glm::scale(modelMatrixCowboyBody, glm::vec3(0.0021f));
 		cowboyModelAnimate.render(modelMatrixCowboyBody);
@@ -1104,7 +1272,7 @@ void applicationLoop() {
 		glm::mat4 modelMatrixCyborgBody = glm::mat4(modelMatrixCyborg);
 		modelMatrixCyborgBody = glm::scale(modelMatrixCyborgBody, glm::vec3(0.009f));
 		cyborgModelAnimate.setAnimationIndex(1);
-		cyborgModelAnimate.render(modelMatrixCyborgBody);
+		cyborgModelAnimate.render(modelMatrixCyborgBody);*/
 
 		/*******************************************
 		 * Skybox
