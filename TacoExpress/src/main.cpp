@@ -73,7 +73,7 @@ Model modelCarne;
 Model modelCarneCocida;
 Model modelCarnePicada;
 Model modelCarneCaja;
-Model modelChef;
+//Model modelChef;
 
 // Lamps
 Model modelLamp1;
@@ -84,15 +84,16 @@ Model modelLampara;
 
 // Modelos animados
 // Mayow
-Model mayowModelAnimate;
+//Model mayowModelAnimate;
+Model chefModelAnimate;
 // Cowboy
-Model cowboyModelAnimate;
+//Model cowboyModelAnimate;
 // Guardian con lampara
-Model guardianModelAnimate;
+//Model guardianModelAnimate;
 // Cybog
-Model cyborgModelAnimate;
+//Model cyborgModelAnimate;
 // Terrain model instance
-Terrain terrain(-1, -1, 200, 1, "../Textures/heightmap.png");
+//Terrain terrain(-1, -1, 200, 1, "../Textures/heightmap.png");
 
 GLuint textureCespedID, textureWallID, textureWindowID, textureHighwayID, textureLandingPadID;
 GLuint textureCalleID, textureBanquetaID, textureEdificioID;
@@ -130,13 +131,13 @@ glm::mat4 modelMatrixCarneCocida = glm::mat4(1.0f);
 glm::mat4 modelMatrixCarnePicada = glm::mat4(1.0f);
 glm::mat4 modelMatrixCarneCaja = glm::mat4(1.0f);
 glm::mat4 modelMatrixChef = glm::mat4(1.0f);
-
-glm::mat4 modelMatrixMayow = glm::mat4(1.0f);
+//glm::mat4 modelMatrixMayow = glm::mat4(1.0f);
 //glm::mat4 modelMatrixCowboy = glm::mat4(1.0f);
 //glm::mat4 modelMatrixGuardian = glm::mat4(1.0f);
 //glm::mat4 modelMatrixCyborg = glm::mat4(1.0f);
 
-int animationMayowIndex = 1;
+//int animationMayowIndex = 1;
+int animationChefIndex = 1;
 float rotDartHead = 0.0, rotDartLeftArm = 0.0, rotDartLeftHand = 0.0, rotDartRightArm = 0.0, rotDartRightHand = 0.0, rotDartLeftLeg = 0.0, rotDartRightLeg = 0.0;
 float rotBuzzHead = 0.0, rotBuzzLeftarm = 0.0, rotBuzzLeftForeArm = 0.0, rotBuzzLeftHand = 0.0;
 int modelSelected = 0;
@@ -349,8 +350,8 @@ void init(int width, int height, std::string strTitle, bool bFullScreen) {
 	modelCarneCaja.loadModel("../models/taco/cajaCarne.obj");
 	modelCarneCaja.setShader(&shaderMulLighting);
 
-	modelChef.loadModel("../models/chef/chef.obj");
-	modelChef.setShader(&shaderMulLighting);
+	//modelChef.loadModel("../models/chef/chef.obj");
+	//modelChef.setShader(&shaderMulLighting);
 	// Lamps
 	modelLamp1.loadModel("../models/Street-Lamp-Black/objLamp.obj");
 	modelLamp1.setShader(&shaderMulLighting);
@@ -363,9 +364,12 @@ void init(int width, int height, std::string strTitle, bool bFullScreen) {
 	modelLampara.setShader(&shaderMulLighting);
 
 
-	// Mayow
-	mayowModelAnimate.loadModel("../models/mayow/personaje2.fbx");
-	mayowModelAnimate.setShader(&shaderMulLighting);
+	//// Mayow
+	//mayowModelAnimate.loadModel("../models/mayow/personaje2.fbx");
+	//mayowModelAnimate.setShader(&shaderMulLighting);
+
+	chefModelAnimate.loadModel("../models/chef/chefidlerunning.fbx");
+	chefModelAnimate.setShader(&shaderMulLighting);
 
 	// Cowboy
 	//cowboyModelAnimate.loadModel("../models/cowboy/Character Running.fbx");
@@ -380,10 +384,10 @@ void init(int width, int height, std::string strTitle, bool bFullScreen) {
 	//cyborgModelAnimate.setShader(&shaderMulLighting);
 
 	// Terreno
-	terrain.init();
-	terrain.setShader(&shaderTerrain);
+	/*terrain.init();
+	terrain.setShader(&shaderTerrain);*/
 
-	camera->setPosition(glm::vec3(-10.0, 10.0, 0.0));
+	camera->setPosition(glm::vec3(-10.0, 11.0, 0.0));
 
 	// Carga de texturas para el skybox
 	Texture skyboxTexture = Texture("");
@@ -731,18 +735,19 @@ void destroy() {
 	modelCarneCocida.destroy();
 	modelCarnePicada.destroy();
 	modelCarneCaja.destroy();
-	modelChef.destroy();
+	//modelChef.destroy();
 	modelLamp1.destroy();
 	modelLamp2.destroy();
 	modelLampPost2.destroy();
 	modelLampara.destroy();
-	mayowModelAnimate.destroy();
+	//mayowModelAnimate.destroy();
+	chefModelAnimate.destroy();
 	/*cowboyModelAnimate.destroy();
 	guardianModelAnimate.destroy();
 	cyborgModelAnimate.destroy();*/
 
 	// Terrains objects Delete
-	terrain.destroy();
+	//terrain.destroy();
 
 	// Textures Delete
 	glBindTexture(GL_TEXTURE_2D, 0);
@@ -810,6 +815,8 @@ bool processInput(bool continueApplication) {
 		return false;
 	}
 
+	/*camera->mouseMoveCamera(offsetX, offsetY, deltaTime);
+
 	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
 		camera->moveFrontCamera(true, deltaTime * 3);
 	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
@@ -819,7 +826,7 @@ bool processInput(bool continueApplication) {
 	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
 		camera->moveRightCamera(true, deltaTime * 3);
 	if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS)
-		camera->mouseMoveCamera(offsetX, offsetY, deltaTime);
+		camera->mouseMoveCamera(offsetX, offsetY, deltaTime);*/
 	offsetX = 0;
 	offsetY = 0;
 
@@ -871,22 +878,40 @@ bool processInput(bool continueApplication) {
 
 
 	// Controles de mayow
+	//if (modelSelected == 0 && glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) {
+	//	modelMatrixMayow = glm::rotate(modelMatrixMayow, 0.02f, glm::vec3(0, 1, 0));
+	//	animationMayowIndex = 0;
+	//}
+	//else if (modelSelected == 0 && glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) {
+	//	modelMatrixMayow = glm::rotate(modelMatrixMayow, -0.02f, glm::vec3(0, 1, 0));
+	//	animationMayowIndex = 0;
+	//}
+	//if (modelSelected == 0 && glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
+	//	modelMatrixMayow = glm::translate(modelMatrixMayow, glm::vec3(0.0, 0.0, 0.02));
+	//	animationMayowIndex = 0;
+	//}
+	//else if (modelSelected == 0 && glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
+	//	modelMatrixMayow = glm::translate(modelMatrixMayow, glm::vec3(0.0, 0.0, -0.02));
+	//	animationMayowIndex = 0;
+	//}
+
 	if (modelSelected == 0 && glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) {
-		modelMatrixMayow = glm::rotate(modelMatrixMayow, 0.02f, glm::vec3(0, 1, 0));
-		animationMayowIndex = 0;
+		modelMatrixChef = glm::rotate(modelMatrixChef, 0.02f, glm::vec3(0, 1, 0));
+		animationChefIndex = 2;
 	}
 	else if (modelSelected == 0 && glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) {
-		modelMatrixMayow = glm::rotate(modelMatrixMayow, -0.02f, glm::vec3(0, 1, 0));
-		animationMayowIndex = 0;
+		modelMatrixChef = glm::rotate(modelMatrixChef, -0.02f, glm::vec3(0, 1, 0));
+		animationChefIndex = 2;
 	}
 	if (modelSelected == 0 && glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
-		modelMatrixMayow = glm::translate(modelMatrixMayow, glm::vec3(0.0, 0.0, 0.02));
-		animationMayowIndex = 0;
+		modelMatrixChef = glm::translate(modelMatrixChef, glm::vec3(0.05, 0.0, 0.0));
+		animationChefIndex = 2;
 	}
 	else if (modelSelected == 0 && glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
-		modelMatrixMayow = glm::translate(modelMatrixMayow, glm::vec3(0.0, 0.0, -0.02));
-		animationMayowIndex = 0;
+		modelMatrixChef = glm::translate(modelMatrixChef, glm::vec3(-0.05, 0.0, 0.0));
+		animationChefIndex = 2;
 	}
+
 
 	glfwPollEvents();
 	return continueApplication;
@@ -896,33 +921,36 @@ void applicationLoop() {
 	bool psi = true;
 
 	int state = 0;
-	int stateLambo = 0;
-	int numberAdvanceLambo = 0;
-	int maxAdvanceLambo = 0.0;
-	float advanceCountLambo = 0.0;
-	float rotWheelsXLambo = 0.0;
-	float rotWheelsYLambo = 0.0;
-	float rotCountLambo = 0.0;
-	float advanceCount = 0.0;
-	float rotCount = 0.0;
-	float rotWheelsX = 0.0;
-	float rotWheelsY = 0.0;
-	int numberAdvance = 0;
-	int maxAdvance = 0.0;
+	//int stateLambo = 0;
+	//int numberAdvanceLambo = 0;
+	//int maxAdvanceLambo = 0.0;
+	//float advanceCountLambo = 0.0;
+	//float rotWheelsXLambo = 0.0;
+	//float rotWheelsYLambo = 0.0;
+	//float rotCountLambo = 0.0;
+	//float advanceCount = 0.0;
+	//float rotCount = 0.0;
+	//float rotWheelsX = 0.0;
+	//float rotWheelsY = 0.0;
+	//int numberAdvance = 0;
+	//int maxAdvance = 0.0;
 
-	modelMatrixTortilla = glm::translate(modelMatrixTortilla, glm::vec3(-3.0, 0.0, 2.0));
-	modelMatrixTortillero = glm::translate(modelMatrixTortillero, glm::vec3(-3.0, 0.0, 12.0));
+	/*modelMatrixTortilla = glm::translate(modelMatrixTortilla, glm::vec3(-3.0, 0.0, 2.0));
+	modelMatrixTortillero = glm::translate(modelMatrixTortillero, glm::vec3(-3.0, 0.0, 12.0));*/
 	modelMatrixFoodTruck = glm::translate(modelMatrixFoodTruck, glm::vec3(1.0, 0.0, 1.0));
 	modelMatrixFoodTruck = glm::scale(modelMatrixFoodTruck, glm::vec3(0.5, 0.5, 0.5));
 
-	modelMatrixCarne= glm::translate(modelMatrixCarne, glm::vec3(0.0, 0.0, 2.0));
-	modelMatrixCarneCocida= glm::translate(modelMatrixCarneCocida, glm::vec3(0.0, 0.0, 12.0));
-	modelMatrixCarnePicada= glm::translate(modelMatrixCarnePicada, glm::vec3(0.0, 0.0, 22.0));
-	modelMatrixCarneCaja= glm::translate(modelMatrixCarneCaja, glm::vec3(0.0, 0.0, 32.0));
-	modelMatrixChef= glm::translate(modelMatrixChef, glm::vec3(10.0, 0.0, 32.0));
+	//modelMatrixCarne= glm::translate(modelMatrixCarne, glm::vec3(0.0, 0.0, 2.0));
+	//modelMatrixCarneCocida= glm::translate(modelMatrixCarneCocida, glm::vec3(0.0, 0.0, 12.0));
+	//modelMatrixCarnePicada= glm::translate(modelMatrixCarnePicada, glm::vec3(0.0, 0.0, 22.0));
+	//modelMatrixCarneCaja= glm::translate(modelMatrixCarneCaja, glm::vec3(0.0, 0.0, 32.0));
+	
+	modelMatrixChef= glm::translate(modelMatrixChef, glm::vec3(1.0f, 1.0f, 0.1f));
+	//modelMatrixChef = glm::rotate(modelMatrixChef, glm::radians(-90.0f), glm::vec3(0, 1, 0)); 
+	//modelMatrixChef = glm::scale(modelMatrixChef, glm::vec3(0.001, 0.001, 0.001));
 
-	modelMatrixMayow = glm::translate(modelMatrixMayow, glm::vec3(13.0f, 0.05f, -5.0f));
-	modelMatrixMayow = glm::rotate(modelMatrixMayow, glm::radians(-90.0f), glm::vec3(0, 1, 0));
+	/*modelMatrixMayow = glm::translate(modelMatrixMayow, glm::vec3(13.0f, 0.05f, -5.0f));
+	modelMatrixMayow = glm::rotate(modelMatrixMayow, glm::radians(-90.0f), glm::vec3(0, 1, 0));*/
 
 	//modelMatrixCowboy = glm::translate(modelMatrixCowboy, glm::vec3(13.0, 0.05, 0.0));
 
@@ -1216,25 +1244,25 @@ void applicationLoop() {
 
 		/*matrixModelRock[3][1] = terrain.getHeightTerrain(matrixModelRock[3][0], matrixModelRock[3][2]);
 		modelRock.render(matrixModelRock);*/
-		modelMatrixTortilla[3][1] = terrain.getHeightTerrain(modelMatrixTortilla[3][0], modelMatrixTortilla[3][2]);
+		/*modelMatrixTortilla[3][1] = terrain.getHeightTerrain(modelMatrixTortilla[3][0], modelMatrixTortilla[3][2]);
 		modelTortilla.render(modelMatrixTortilla);
 		modelMatrixTortillero[3][1] = terrain.getHeightTerrain(modelMatrixTortillero[3][0], modelMatrixTortillero[3][2]);
-		modelTortillero.render(modelMatrixTortillero);
+		modelTortillero.render(modelMatrixTortillero);*/
 
-		modelMatrixFoodTruck[3][1] = terrain.getHeightTerrain(modelMatrixFoodTruck[3][0], modelMatrixFoodTruck[3][2]);
+		//modelMatrixFoodTruck[3][1] = terrain.getHeightTerrain(modelMatrixFoodTruck[3][0], modelMatrixFoodTruck[3][2]);
 		modelFoodTruck.render(modelMatrixFoodTruck);
 
-		modelMatrixCarne[3][1] = terrain.getHeightTerrain(modelMatrixCarne[3][0], modelMatrixCarne[3][2]);
+		/*modelMatrixCarne[3][1] = terrain.getHeightTerrain(modelMatrixCarne[3][0], modelMatrixCarne[3][2]);
 		modelCarne.render(modelMatrixCarne);
 		modelMatrixCarneCocida[3][1] = terrain.getHeightTerrain(modelMatrixCarneCocida[3][0], modelMatrixCarneCocida[3][2]);
 		modelCarneCocida.render(modelMatrixCarneCocida);
 		modelMatrixCarnePicada[3][1] = terrain.getHeightTerrain(modelMatrixCarnePicada[3][0], modelMatrixCarnePicada[3][2]);
 		modelCarnePicada.render(modelMatrixCarnePicada);
 		modelMatrixCarneCaja[3][1] = terrain.getHeightTerrain(modelMatrixCarneCaja[3][0], modelMatrixCarneCaja[3][2]);
-		modelCarneCaja.render(modelMatrixCarneCaja);
+		modelCarneCaja.render(modelMatrixCarneCaja);*/
 
-		modelMatrixChef[3][1] = terrain.getHeightTerrain(modelMatrixChef[3][0], modelMatrixChef[3][2]);
-		modelChef.render(modelMatrixChef);
+		/*modelMatrixChef[3][1] = terrain.getHeightTerrain(modelMatrixChef[3][0], modelMatrixChef[3][2]);
+		modelChef.render(modelMatrixChef);*/
 
 		// Forze to enable the unit texture to 0 always ----------------- IMPORTANT
 		glActiveTexture(GL_TEXTURE0);
@@ -1244,7 +1272,7 @@ void applicationLoop() {
 		/*****************************************
 		 * Objetos animados por huesos
 		 * **************************************/
-		glm::vec3 ejey = glm::normalize(terrain.getNormalTerrain(modelMatrixMayow[3][0], modelMatrixMayow[3][2]));
+	/*	glm::vec3 ejey = glm::normalize(terrain.getNormalTerrain(modelMatrixMayow[3][0], modelMatrixMayow[3][2]));
 		glm::vec3 ejex = glm::vec3(modelMatrixMayow[0]);
 		glm::vec3 ejez = glm::normalize(glm::cross(ejex, ejey));
 		ejex = glm::normalize(glm::cross(ejey, ejez));
@@ -1256,7 +1284,27 @@ void applicationLoop() {
 		modelMatrixMayowBody = glm::scale(modelMatrixMayowBody, glm::vec3(0.021f));
 		mayowModelAnimate.setAnimationIndex(animationMayowIndex);
 		mayowModelAnimate.render(modelMatrixMayowBody);
-		animationMayowIndex = 1;
+		animationMayowIndex = 1;*/
+
+
+		//glm::vec3 ejey = glm::normalize(terrain.getNormalTerrain(modelMatrixChef[3][0], modelMatrixChef[3][2]));
+		//
+		//glm::vec3 ejex = glm::vec3(modelMatrixChef[0]);
+		//glm::vec3 ejez = glm::normalize(glm::cross(ejex, ejey));
+		//ejex = glm::normalize(glm::cross(ejey, ejez));
+		//modelMatrixChef[0] = glm::vec4(ejex, 0.0);
+		//modelMatrixChef[1] = glm::vec4(ejey, 0.0);
+		//modelMatrixChef[2] = glm::vec4(ejez, 0.0);
+		//modelMatrixChef[3][1] = terrain.getHeightTerrain(modelMatrixChef[3][0], modelMatrixChef[3][2]);
+		//
+		glm::mat4 modelMatrixChefBody = glm::mat4(modelMatrixChef);
+		modelMatrixChefBody = glm::scale(modelMatrixChefBody, glm::vec3(0.007f));
+
+		
+		//modelMatrixChef = glm::translate(modelMatrixChef, glm::vec3(0.0f, 10.0f, 0.0f));
+		chefModelAnimate.setAnimationIndex(animationChefIndex);
+		chefModelAnimate.render(modelMatrixChefBody);
+		animationChefIndex = 1;
 
 		/*modelMatrixCowboy[3][1] = terrain.getHeightTerrain(modelMatrixCowboy[3][0], modelMatrixCowboy[3][2]);
 		glm::mat4 modelMatrixCowboyBody = glm::mat4(modelMatrixCowboy);
