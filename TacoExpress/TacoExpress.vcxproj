@@ -73,11 +73,11 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <IncludePath>..\external\Freetype\include;$(VC_IncludePath);$(WindowsSDK_IncludePath);..\external\glm;..\external\glew\include;..\external\glfw\include;..\external\FreeImage\include;..\external\assimp\include;..\external\OpenAL/include;..\external\freealut\include;..\CGALib\include</IncludePath>
+    <IncludePath>..\bin\include;..\external\Freetype\include;$(VC_IncludePath);$(WindowsSDK_IncludePath);..\external\glm;..\external\glew\include;..\external\glfw\include;..\external\FreeImage\include;..\external\assimp\include;..\external\OpenAL/include;..\external\freealut\include;..\CGALib\include</IncludePath>
     <LibraryPath>$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);$(NETFXKitsDir)Lib\um\x86;..\external\glew\lib\;..\external\glfw\lib;..\external\FreeImage\lib;..\external\assimp\lib;../external/OpenAL/lib;..\external\freealut\lib;../Debug</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <IncludePath>..\external\Freetype\include;$(VC_IncludePath);$(WindowsSDK_IncludePath);..\external\glm;..\external\glew\include;..\external\glfw\include;..\external\FreeImage\include;..\external\assimp\include;..\external\OpenAL/include;..\external\freealut\include;..\CGALib\include</IncludePath>
+    <IncludePath>..\bin\include;..\external\Freetype\include;$(VC_IncludePath);$(WindowsSDK_IncludePath);..\external\glm;..\external\glew\include;..\external\glfw\include;..\external\FreeImage\include;..\external\assimp\include;..\external\OpenAL/include;..\external\freealut\include;..\CGALib\include</IncludePath>
     <LibraryPath>$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);$(NETFXKitsDir)Lib\um\x86;..\external\glew\lib\;..\external\glfw\lib;..\external\FreeImage\lib;..\external\assimp\lib;../external/OpenAL/lib/x86;..\external\freetype\lib;..\external\freealut\lib;../Release</LibraryPath>
     <ExecutablePath>$(ExecutablePath)</ExecutablePath>
     <OutDir>$(SolutionDir)$(Configuration)\</OutDir>

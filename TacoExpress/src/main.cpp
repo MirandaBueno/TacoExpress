@@ -107,6 +107,8 @@ Model modelBurnersTable;
 Model modelBurners;
 Model modelIngredientsTable;
 Model modelIngredientsTableCarne;
+Model modelIngredientsTableCilantro;
+Model modelIngredientsTableCebolla;
 Model modelCarne;
 Model modelCarneCocida;
 Model modelCarnePicada;
@@ -178,6 +180,8 @@ glm::mat4 modelMatrixBurnersTable = glm::mat4(1.0f);
 glm::mat4 modelMatrixBurners = glm::mat4(1.0f);
 glm::mat4 modelMatrixIngredientsTable = glm::mat4(1.0f);
 glm::mat4 modelMatrixIngredientsTableCarne = glm::mat4(1.0f);
+glm::mat4 modelMatrixIngredientsTableCilantro = glm::mat4(1.0f);
+glm::mat4 modelMatrixIngredientsTableCebolla = glm::mat4(1.0f);
 glm::mat4 modelMatrixCarne = glm::mat4(1.0f);
 glm::mat4 modelMatrixCarneCocida = glm::mat4(1.0f);
 glm::mat4 modelMatrixCarnePicada = glm::mat4(1.0f);
@@ -354,6 +358,7 @@ std::vector<bool> sourcesPlay = { true, true, true };
 GLuint depthMap, depthMapFBO;
 
 int count = 0;
+int countCliente = 0;
 
 // Definicion de variables para el sistema de particulas de quemador
 //GLuint initVel, startTime;
@@ -588,7 +593,13 @@ void init(int width, int height, std::string strTitle, bool bFullScreen) {
 
 	modelIngredientsTableCarne.loadModel("../models/foodTruck/foodtruckinside_ingredientstable_carne.obj");
 	modelIngredientsTableCarne.setShader(&shaderMulLighting);	
-	
+
+	modelIngredientsTableCilantro.loadModel("../models/foodTruck/foodtruckinside_ingredientstable_cilantro.obj");
+	modelIngredientsTableCilantro.setShader(&shaderMulLighting);
+
+	modelIngredientsTableCebolla.loadModel("../models/foodTruck/foodtruckinside_ingredientstable_cebolla.obj");
+	modelIngredientsTableCebolla.setShader(&shaderMulLighting);
+
 	modelCarne.loadModel("../models/taco/carneCruda.obj");
 	modelCarne.setShader(&shaderMulLighting);
 
@@ -1121,6 +1132,8 @@ void destroy() {
 	modelDish.destroy();
 	modelIngredientsTable.destroy();
 	modelIngredientsTableCarne.destroy();
+	modelIngredientsTableCilantro.destroy();
+	modelIngredientsTableCebolla.destroy();
 	modelCarne.destroy();
 	modelCarneCocida.destroy();
 	modelCarnePicada.destroy();
@@ -1226,16 +1239,16 @@ bool processInput(bool continueApplication) {
 
 
 
-	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-		camera->moveFrontCamera(true, deltaTime*3);
-	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-		camera->moveFrontCamera(false, deltaTime*3);
-	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-		camera->moveRightCamera(false, deltaTime*3);
-	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-		camera->moveRightCamera(true, deltaTime*3);
-	if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS)
-		camera->mouseMoveCamera(offsetX, offsetY, deltaTime);
+	//if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+	//	camera->moveFrontCamera(true, deltaTime*3);
+	//if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+	//	camera->moveFrontCamera(false, deltaTime*3);
+	//if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+	//	camera->moveRightCamera(false, deltaTime*3);
+	//if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+	//	camera->moveRightCamera(true, deltaTime*3);
+	//if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS)
+	//	camera->mouseMoveCamera(offsetX, offsetY, deltaTime);
 
 	if (!iniciaPartida) {
 		bool presionarEnter = glfwGetKey(window, GLFW_KEY_ENTER) == GLFW_PRESS;
@@ -1595,6 +1608,8 @@ void prepareScene() {
 	modelDish.setShader(&shaderMulLighting);
 	modelIngredientsTable.setShader(&shaderMulLighting);
 	modelIngredientsTableCarne.setShader(&shaderMulLighting);
+	modelIngredientsTableCilantro.setShader(&shaderMulLighting);
+	modelIngredientsTableCebolla.setShader(&shaderMulLighting);
 	modelCarne.setShader(&shaderMulLighting);
 	modelCarneCocida.setShader(&shaderMulLighting);
 	modelCarnePicada.setShader(&shaderMulLighting);
@@ -1635,6 +1650,8 @@ void prepareDepthScene() {
 	modelDish.setShader(&shaderDepth);
 	modelIngredientsTable.setShader(&shaderDepth);
 	modelIngredientsTableCarne.setShader(&shaderDepth);
+	modelIngredientsTableCilantro.setShader(&shaderDepth);
+	modelIngredientsTableCebolla.setShader(&shaderDepth);
 	modelCarne.setShader(&shaderDepth);
 	modelCarneCocida.setShader(&shaderDepth);
 	modelCarnePicada.setShader(&shaderDepth);
@@ -1679,6 +1696,8 @@ void renderSolidScene() {
 	modelDishes.render(modelMatrixDishes);
 	modelIngredientsTable.render(modelMatrixIngredientsTable);
 	modelIngredientsTableCarne.render(modelMatrixIngredientsTableCarne);
+	modelIngredientsTableCilantro.render(modelMatrixIngredientsTableCilantro);
+	modelIngredientsTableCebolla.render(modelMatrixIngredientsTableCebolla);
 	modelTortillero.render(modelMatrixTortillero);
 
 
@@ -1702,45 +1721,45 @@ void renderSolidScene() {
 	//	modelLampPost2.render();
 	//}
 
-	if (pickCarne==true && ordenEntregada == false) {
+	if (pickCarne==true ) {
 		//modelCarne.setPosition(glm::vec3(modelMatrixChef[3]));
 		//modelMatrixCarne = glm::translate(modelMatrixCarne, glm::vec3(1.0, 0.5, 0.1));
 		modelCarne.render(modelMatrixCarne);
 		pickCarne = true;
 	}
 
-	if (carneComal == true && ordenEntregada == false) {
+	if (carneComal == true ) {
 		modelCarneCocida.render(modelMatrixCarneCocida);
 		carneComal = true;
 		count++;
 		//std::this_thread::sleep_for(std::chrono::milliseconds(500));
 	}
 
-	if (pickCarneCocida == true && ordenEntregada == false) {
+	if (pickCarneCocida == true ) {
 		modelCarneCocida.render(modelMatrixCarneCocida);
 		//std::cout << "****************** 4 ******************" << std::endl;
 		pickCarneCocida = true;
 	}
 
-	if (carneChop == true && ordenEntregada == false) {
+	if (carneChop == true ) {
 		modelCarnePicada.render(modelMatrixCarnePicada);
 		carneChop = true;
 		count++;
 		
 	}
-	if (pickCarnePicada == true && ordenEntregada == false) {
+	if (pickCarnePicada == true ) {
 		modelCarnePicada.render(modelMatrixCarnePicada);
 		std::cout << "****************** 8 ******************" << std::endl;
 		ordenPreparada[1] = 1.0f;
 		pickCarnePicada = true;
 	}
-	if (pickPlato == true && ordenEntregada == false) {
+	if (pickPlato == true ) {
 		modelDish.render(modelMatrixDish);
 		std::cout << "****************** 12 ******************" << std::endl;
 		ordenPreparada[0] = ordenPreparada[0] + 0.5f;
 		pickPlato = true;
 	}
-	if (pickTortilla == true && ordenEntregada == false) {
+	if (pickTortilla == true ) {
 		modelTortilla.render(modelMatrixTortilla);
 		std::cout << "****************** 12 ******************" << std::endl;
 		ordenPreparada[0] = ordenPreparada[0] + 0.5f;
@@ -1867,9 +1886,9 @@ void renderSolidScene() {
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, textureActivaID);
 	shaderTexture.setInt("outTexture", 0);
-	glEnable(GL_BLEND);
+	/*glEnable(GL_BLEND);
 	boxIntro.render();
-	glDisable(GL_BLEND);
+	glDisable(GL_BLEND);*/
 
 	std::string ordenTexto1;
 	std::string ordenTexto2;
@@ -1991,7 +2010,12 @@ void applicationLoop() {
 	modelMatrixIngredientsTableCarne = glm::translate(modelMatrixIngredientsTableCarne, glm::vec3(1.0, 0.0, 1.0));
 	modelMatrixIngredientsTableCarne = glm::scale(modelMatrixIngredientsTableCarne, glm::vec3(0.5, 0.5, 0.5));
 
-	
+	modelMatrixIngredientsTableCilantro = glm::translate(modelMatrixIngredientsTableCilantro, glm::vec3(1.0, 0.0, 1.0));
+	modelMatrixIngredientsTableCilantro = glm::scale(modelMatrixIngredientsTableCilantro, glm::vec3(0.5, 0.5, 0.5));
+
+	modelMatrixIngredientsTableCebolla = glm::translate(modelMatrixIngredientsTableCebolla, glm::vec3(1.0, 0.0, 1.0));
+	modelMatrixIngredientsTableCebolla = glm::scale(modelMatrixIngredientsTableCebolla, glm::vec3(0.5, 0.5, 0.5));
+
 	modelMatrixCarne = glm::translate(modelMatrixCarne, glm::vec3(-1.9, 2.2, 5.6));
 	modelMatrixCarne = glm::scale(modelMatrixCarne, glm::vec3(0.5, 0.5, 0.5));
 	modelMatrixCarne = glm::rotate(modelMatrixCarne, glm::radians(90.0f), glm::vec3(0, 1, 0));
@@ -2230,29 +2254,7 @@ void applicationLoop() {
 		//	shaderTerrain.setFloat("pointLights[" + std::to_string(lamp1Position.size() + i) + "].quadratic", 0.02);*/
 		//}
 
-		if (ordenEntregada == true) {
-			//orden entegada es que ya se entrego al cliente
-			std::cout << "cliente " << ordenCliente[0]  << std::endl;
-			std::cout << "cliente " << ordenCliente[1]  << std::endl;
-			/*std::cout << "cliente " << ordenCliente[2]  << std::endl;
-			std::cout << "cliente " << ordenCliente[3]  << std::endl;*/
-			std::cout << "preparada " << ordenPreparada[0]  << std::endl;
-			std::cout << "preparada " << ordenPreparada[1]  << std::endl;
-			/*std::cout << "preparada " << ordenPreparada[2]  << std::endl;
-			std::cout << "preparada " << ordenPreparada[3]  << std::endl;*/
-
-
-			if (ordenCliente == ordenPreparada) {
-				animationClienteIndex = 4;
-			}
-			else {
-				animationClienteIndex = 5;
-			}
-			ordenEntregada = false;
-			/*ordenCliente[2] = dis(gen);
-			ordenCliente[3] = dis(gen);*/
-			ordenPreparada = glm::vec2(0.0);
-		}
+		
 
 		//if (ordenTerminada == true) {
 		//	ordenCliente[0] = 1.0f;
@@ -2693,6 +2695,12 @@ void applicationLoop() {
 				if (raySphereIntersect(o, t, glm::normalize(t - o), std::get<0>(itSBB1->second), tRint) && chefPositionX > 3.0 && chefPositionZ < 1.5 && chefPositionZ > -1.1) {
 					std::cout << "Seleccionando la esfera " << itSBB1->first << std::endl;
 					ordenEntregada = true;
+					pickCarne = false;
+					pickCarneCocida = false;
+					pickCarnePicada = false;
+					pickPlato = false;
+					pickTortilla = false;
+					
 				}
 			}
 			/*for (itSBB1 = collidersSBB.begin(); itSBB1 != collidersSBB.end(); itSBB1++) {
@@ -2725,8 +2733,43 @@ void applicationLoop() {
 		else {
 			animationChefIndex = 1;
 		}
+
+		//if (ordenEntregada == true) {
+		//	//orden entegada es que ya se entrego al cliente
+		//	std::cout << "cliente " << ordenCliente[0] << std::endl;
+		//	std::cout << "cliente " << ordenCliente[1] << std::endl;
+		//	/*std::cout << "cliente " << ordenCliente[2]  << std::endl;
+		//	std::cout << "cliente " << ordenCliente[3]  << std::endl;*/
+		//	std::cout << "preparada " << ordenPreparada[0] << std::endl;
+		//	std::cout << "preparada " << ordenPreparada[1] << std::endl;
+		//	/*std::cout << "preparada " << ordenPreparada[2]  << std::endl;
+		//	std::cout << "preparada " << ordenPreparada[3]  << std::endl;*/
+
+
+		//	
+		//	//countCliente++;
+		//}
+		//if (ordenCliente == ordenPreparada) {
+		//	animationClienteIndex = 4;
+		//	countCliente++;
+		//	ordenEntregada = false;
+		//}
+		//else {
+		//	animationClienteIndex = 3;
+		//	countCliente++;
+		//	ordenEntregada = false;
+		//}
+
+		//if(countCliente > 20){
+		//	ordenEntregada = false;
+		//	/*ordenCliente[2] = dis(gen);
+		//	ordenCliente[3] = dis(gen);*/
+		//	ordenPreparada = glm::vec2(0.0);
+		//	animationClienteIndex = 3;
+		//	countCliente = 0;
+		//}
 		
-		animationClienteIndex = 3;
+		
 
 		glfwSwapBuffers(window);
 
