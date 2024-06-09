@@ -6,6 +6,7 @@
 //std includes
 #include <string>
 #include <iostream>
+#include <random>
 
 //glfw include
 #include <GLFW/glfw3.h>
@@ -73,6 +74,8 @@ Shader shaderTexture;
 Shader shaderDepth;
 // Shader para visualizar el buffer de profundidad
 Shader shaderViewDepth;
+//Shader para las particulas de fountain
+//Shader shaderParticlesBurner;
 
 std::shared_ptr<FirstPersonCamera> camera(new FirstPersonCamera());
 float distanceFromTarget = 7.0;
@@ -96,10 +99,21 @@ Box boxViewDepth;
 
 // Models complex instances
 Model modelChoppingTable;
+Model modelTable;
 Model modelDishesTable;
+Model modelDishes;
+Model modelDish;
 Model modelBurnersTable;
+Model modelBurners;
 Model modelIngredientsTable;
+Model modelIngredientsTableCarne;
+Model modelCarne;
+Model modelCarneCocida;
+Model modelCarnePicada;
+Model modelTortilla;
+Model modelTortillero;
 
+//Model modelGlass;
 
 Model modelFoodTruck;
 
@@ -124,11 +138,15 @@ GLuint textureCespedID, textureWallID, textureWindowID, textureHighwayID, textur
 GLuint textureCalleID, textureBanquetaID, textureEdificioID;
 GLuint skyboxTextureID;
 GLuint textureInit1ID, textureInit2ID, textureActivaID, textureScreenID;
+//GLuint textureParticleBurnerID;
 
 bool iniciaPartida = false, presionarOpcion = false;
 
 // Modelo para el render del texto
-FontTypeRendering::FontTypeRendering* modelText;
+FontTypeRendering::FontTypeRendering* modelText1;
+FontTypeRendering::FontTypeRendering* modelText2;
+FontTypeRendering::FontTypeRendering* modelText3;
+FontTypeRendering::FontTypeRendering* modelText4;
 
 GLenum types[6] = {
 GL_TEXTURE_CUBE_MAP_POSITIVE_X,
@@ -152,17 +170,29 @@ int lastMousePosY, offsetY = 0;
 
 // Model matrix definitions
 glm::mat4 modelMatrixChoppingTable = glm::mat4(1.0f);
+glm::mat4 modelMatrixTable = glm::mat4(1.0f);
 glm::mat4 modelMatrixDishesTable = glm::mat4(1.0f);
+glm::mat4 modelMatrixDishes = glm::mat4(1.0f);
+glm::mat4 modelMatrixDish = glm::mat4(1.0f);
 glm::mat4 modelMatrixBurnersTable = glm::mat4(1.0f);
+glm::mat4 modelMatrixBurners = glm::mat4(1.0f);
 glm::mat4 modelMatrixIngredientsTable = glm::mat4(1.0f);
+glm::mat4 modelMatrixIngredientsTableCarne = glm::mat4(1.0f);
+glm::mat4 modelMatrixCarne = glm::mat4(1.0f);
+glm::mat4 modelMatrixCarneCocida = glm::mat4(1.0f);
+glm::mat4 modelMatrixCarnePicada = glm::mat4(1.0f);
+glm::mat4 modelMatrixTortilla = glm::mat4(1.0f);
+glm::mat4 modelMatrixTortillero = glm::mat4(1.0f);
+
 
 glm::mat4 modelMatrixFoodTruck = glm::mat4(1.0f);
+glm::mat4 modelMatrixGlass = glm::mat4(1.0f);
 glm::mat4 modelMatrixChef = glm::mat4(1.0f);
 glm::mat4 modelMatrixCliente = glm::mat4(1.0f);
 
 //int animationMayowIndex = 1;
 int animationChefIndex = 1;
-int animationClienteIndex = 1;
+int animationClienteIndex = 3;
 float rotDartHead = 0.0, rotDartLeftArm = 0.0, rotDartLeftHand = 0.0, rotDartRightArm = 0.0, rotDartRightHand = 0.0, rotDartLeftLeg = 0.0, rotDartRightLeg = 0.0;
 float rotBuzzHead = 0.0, rotBuzzLeftarm = 0.0, rotBuzzLeftForeArm = 0.0, rotBuzzLeftHand = 0.0;
 int modelSelected = 0;
@@ -210,6 +240,8 @@ float rotHelHelBack = 0.0;
 int stateDoor = 0;
 float dorRotCount = 0.0;
 
+bool isPicking = false;
+
 // Lamps position
 //15.0f, 1.0f, 0.1f
 std::vector<glm::vec3> lamp1Position = {
@@ -230,9 +262,10 @@ std::vector<float> lamp1Orientation = {
 
 // Blending model unsorted
 std::map<std::string, glm::vec3> blendingUnsorted = {
-		{"aircraft", glm::vec3(10.0, 0.0, -17.5)},
+		{"glass", glm::vec3(1.0, 1.0, 1.0)},
 		{"lambo", glm::vec3(23.0, 0.0, 0.0)},
-		{"heli", glm::vec3(5.0, 10.0, -5.0)}
+		{"heli", glm::vec3(5.0, 10.0, -5.0)},
+		{"burner", glm::vec3(0.0)}
 };
 
 double deltaTime;
@@ -244,6 +277,21 @@ bool isJump = false;
 float GRAVITY = 1.81;
 double tmv = 0;
 double startTimeJump = 0;
+
+bool pickCarne = false;
+bool pickCarneCocida = false;
+bool pickCarnePicada = false;
+bool pickPlato = false;
+bool pickTortilla = false;
+bool carneComal = false;
+bool carneChop = false;
+
+//glm::vec4 ordenCliente(0.0);
+//glm::vec4 ordenPreparada(0.0);
+glm::vec2 ordenCliente(0.0);
+glm::vec2 ordenPreparada(0.0);
+bool ordenTerminada = false;
+bool ordenEntregada = false;
 
 // Colliders
 std::map<std::string, std::tuple<AbstractModel::OBB, glm::mat4, glm::mat4> > collidersOBB;
@@ -305,6 +353,14 @@ std::vector<bool> sourcesPlay = { true, true, true };
 // Framesbuffers
 GLuint depthMap, depthMapFBO;
 
+int count = 0;
+
+// Definicion de variables para el sistema de particulas de quemador
+//GLuint initVel, startTime;
+//GLuint VAOParticles;
+//GLuint nParticulas = 200;
+//double currTimeParticlesAnimation, lastTimeParticlesAnimation;
+
 // Se definen todos las funciones.
 void reshapeCallback(GLFWwindow* Window, int widthRes, int heightRes);
 void keyCallback(GLFWwindow* window, int key, int scancode, int action,
@@ -312,9 +368,71 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action,
 void mouseCallback(GLFWwindow* window, double xpos, double ypos);
 void mouseButtonCallback(GLFWwindow* window, int button, int state, int mod);
 void scrollCallback(GLFWwindow* window, double xoffset, double yoffset);
+//void initParticleBuffers();
 void init(int width, int height, std::string strTitle, bool bFullScreen);
 void destroy();
 bool processInput(bool continueApplication = true);
+
+//
+//void initParticleBuffers() {
+//	//generar buffer
+//	glGenBuffers(1, &initVel);
+//	glGenBuffers(1, &startTime);
+//
+//	int sizeInitVel = nParticulas * 3 * sizeof(GL_FLOAT);
+//	int sizeStartTime = nParticulas * sizeof(GL_FLOAT);
+//	glBindBuffer(GL_ARRAY_BUFFER, initVel);
+//	glBufferData(GL_ARRAY_BUFFER, sizeInitVel, NULL, GL_STATIC_DRAW);
+//	glBindBuffer(GL_ARRAY_BUFFER, startTime);
+//	glBufferData(GL_ARRAY_BUFFER, sizeStartTime, NULL, GL_STATIC_DRAW);
+//
+//	glm::vec3 v(0.0f);
+//	float velocity, theta, phi;
+//	GLfloat *data = new GLfloat(nParticulas * 3);
+//	for (unsigned int i = 0; i < nParticulas; i++) {
+//		theta = glm::mix(0.0f, glm::pi<float>() / 6.0f, ((float)rand()/RAND_MAX));
+//		phi = glm::mix(0.0f, glm::two_pi<float>(), ((float)rand()/RAND_MAX));
+//
+//		v.x = sinf(theta) * cosf(phi);
+//		v.y = cosf(theta);
+//		//v.z = sinf(theta) * sinf(phi);
+//
+//		velocity = glm::mix(0.6f, 0.8f, ((float)rand() / RAND_MAX));
+//		v = glm::normalize(v) * velocity;
+//		data[3 * i] = v.x;
+//		data[3 * i + 1] = v.y;
+//		data[3 * i + 2] = v.z;
+//
+//	}
+//	glBindBuffer(GL_ARRAY_BUFFER, initVel);
+//	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeInitVel, data);
+//	delete[] data;
+//
+//	//t inicial de particula
+//	data = new GLfloat[nParticulas];
+//	float time = 0.0;
+//	float rate = 0.00075f;
+//	for (unsigned int i = 0; i < nParticulas; i++) {
+//		data[i] = time;
+//		time += rate;
+//	}
+//	glBindBuffer(GL_ARRAY_BUFFER, startTime);
+//	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeStartTime, data);
+//	delete[] data;
+//	glBindBuffer(GL_ARRAY_BUFFER, 0);
+//
+//	glGenVertexArrays(1, &VAOParticles);
+//	glBindVertexArray(VAOParticles);
+//	glBindBuffer(GL_ARRAY_BUFFER, initVel);
+//	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+//	glEnableVertexAttribArray(0);
+//
+//	glBindBuffer(GL_ARRAY_BUFFER, startTime);
+//	glVertexAttribPointer(1, 1, GL_FLOAT, GL_FALSE, 0, NULL);
+//	glEnableVertexAttribArray(1);
+//
+//	glBindVertexArray(0);
+//}
 
 // Implementacion de todas las funciones.
 void init(int width, int height, std::string strTitle, bool bFullScreen) {
@@ -380,6 +498,7 @@ void init(int width, int height, std::string strTitle, bool bFullScreen) {
 		"../Shaders/shadow_mapping_depth.fs");
 	shaderViewDepth.initialize("../Shaders/texturizado.vs",
 		"../Shaders/texturizado_depth_view.fs");
+	//shaderParticlesBurner.initialize("../Shaders/particlesFountain.vs", "../Shaders/particlesFountain.fs");
 
 	// Inicializacion de los objetos.
 	skyboxSphere.init();
@@ -436,21 +555,54 @@ void init(int width, int height, std::string strTitle, bool bFullScreen) {
 	/*modelRock.loadModel("../models/rock/rock.obj");
 	modelRock.setShader(&shaderMulLighting);*/
 
+	//modelGlass.loadModel("../models/foodTruck/glass.obj");
+	//modelGlass.setShader(&shaderMulLighting);
+
+	//modelFoodTruck.loadModel("../models/foodTruck/foodTruckinside_cage.obj");
 	modelFoodTruck.loadModel("../models/foodTruck/foodTruckinside_cage.obj");
 	modelFoodTruck.setShader(&shaderMulLighting);
 
 	modelBurnersTable.loadModel("../models/foodTruck/foodtruckinside_burnerstable.obj");
 	modelBurnersTable.setShader(&shaderMulLighting);
 
+	modelBurners.loadModel("../models/foodTruck/burner.obj");
+	modelBurners.setShader(&shaderMulLighting);
+
 	modelChoppingTable.loadModel("../models/foodTruck/foodTruckinside_choppingtable.obj");
 	modelChoppingTable.setShader(&shaderMulLighting);
+
+	modelTable.loadModel("../models/foodTruck/foodTruckinside_choppingtable_table.obj");
+	modelTable.setShader(&shaderMulLighting);
 
 	modelDishesTable.loadModel("../models/foodTruck/foodTruckinside_dishestable.obj");
 	modelDishesTable.setShader(&shaderMulLighting);
 
+	modelDishes.loadModel("../models/foodTruck/foodTruckinside_dishestable_dishes.obj");
+	modelDishes.setShader(&shaderMulLighting);
+
+	modelDish.loadModel("../models/mobiliario/plato.obj");
+	modelDish.setShader(&shaderMulLighting);
+
 	modelIngredientsTable.loadModel("../models/foodTruck/foodtruckinside_ingredientstable.obj");
 	modelIngredientsTable.setShader(&shaderMulLighting);
 
+	modelIngredientsTableCarne.loadModel("../models/foodTruck/foodtruckinside_ingredientstable_carne.obj");
+	modelIngredientsTableCarne.setShader(&shaderMulLighting);	
+	
+	modelCarne.loadModel("../models/taco/carneCruda.obj");
+	modelCarne.setShader(&shaderMulLighting);
+
+	modelCarneCocida.loadModel("../models/taco/carneCocida.obj");
+	modelCarneCocida.setShader(&shaderMulLighting);
+
+	modelCarnePicada.loadModel("../models/taco/carneCocidaPicada.obj");
+	modelCarnePicada.setShader(&shaderMulLighting);
+
+	modelTortilla.loadModel("../models/taco/tortilla.obj");
+	modelTortilla.setShader(&shaderMulLighting);
+
+	modelTortillero.loadModel("../models/foodTruck/foodtruckinside_ingredientstable_tortillas.obj");
+	modelTortillero.setShader(&shaderMulLighting);
 
 	//Lamps models
 	modelLamp1.loadModel("../models/Street-Lamp-Black/objLamp.obj");
@@ -462,7 +614,7 @@ void init(int width, int height, std::string strTitle, bool bFullScreen) {
 
 
 	//Chef
-	chefModelAnimate.loadModel("../models/chef/chefidlerunning.fbx");
+	chefModelAnimate.loadModel("../models/chef/chef5.fbx");
 	chefModelAnimate.setShader(&shaderMulLighting);
 
 	//Cliente
@@ -476,8 +628,17 @@ void init(int width, int height, std::string strTitle, bool bFullScreen) {
 	terrain.setShader(&shaderTerrain);*/
 
 	// Se inicializa el model de render text
-	modelText = new FontTypeRendering::FontTypeRendering(screenWidth, screenHeight);
-	modelText->Initialize();
+	modelText1 = new FontTypeRendering::FontTypeRendering(screenWidth, screenHeight);
+	modelText1->Initialize();
+
+	modelText2 = new FontTypeRendering::FontTypeRendering(screenWidth, screenHeight);
+	modelText2->Initialize();
+
+	modelText3 = new FontTypeRendering::FontTypeRendering(screenWidth, screenHeight);
+	modelText3->Initialize();
+
+	modelText4 = new FontTypeRendering::FontTypeRendering(screenWidth, screenHeight);
+	modelText4->Initialize();
 
 	/*camera->setPosition(glm::vec3(0.0, 3.0, 4.0));
 	camera->setDistanceFromTarget(distanceFromTarget);
@@ -752,10 +913,31 @@ void init(int width, int height, std::string strTitle, bool bFullScreen) {
 		glTexImage2D(GL_TEXTURE_2D, 0, textureScreen.getChannels() == 3 ? GL_RGB : GL_RGBA, textureScreen.getWidth(), textureScreen.getHeight(), 0,
 			textureScreen.getChannels() == 3 ? GL_RGB : GL_RGBA, GL_UNSIGNED_BYTE, textureScreen.getData());
 		glGenerateMipmap(GL_TEXTURE_2D);
+	
 	}
 	else
 		std::cout << "Fallo la carga de textura" << std::endl;
 	textureScreen.freeImage(); // Liberamos memoria
+
+
+	//// Definiendo la textura
+	//Texture textureParticlesBurner("../Textures/bluewater.png");
+	//textureParticlesBurner.loadImage(); // Cargar la textura
+	//glGenTextures(1, &textureParticleBurnerID); // Creando el id de la textura del landingpad
+	//glBindTexture(GL_TEXTURE_2D, textureParticleBurnerID); // Se enlaza la textura
+	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT); // Wrapping en el eje u
+	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT); // Wrapping en el eje v
+	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR); // Filtering de minimización
+	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR); // Filtering de maximimizacion
+	//if (textureParticlesBurner.getData()) {
+	//	// Transferir los datos de la imagen a la tarjeta
+	//	glTexImage2D(GL_TEXTURE_2D, 0, textureParticlesBurner.getChannels() == 3 ? GL_RGB : GL_RGBA, textureParticlesBurner.getWidth(), textureParticlesBurner.getHeight(), 0,
+	//		textureParticlesBurner.getChannels() == 3 ? GL_RGB : GL_RGBA, GL_UNSIGNED_BYTE, textureParticlesBurner.getData());
+	//	glGenerateMipmap(GL_TEXTURE_2D);
+	//}
+	//else
+	//	std::cout << "Fallo la carga de textura" << std::endl;
+	//textureParticlesBurner.freeImage(); // Liberamos memoria
 
 	/*******************************************
 	 * OpenAL init
@@ -892,6 +1074,9 @@ void init(int width, int height, std::string strTitle, bool bFullScreen) {
 	glDrawBuffer(GL_NONE);
 	glReadBuffer(GL_NONE);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+	//inicializacion de data de particula
+	//initParticleBuffers();
 }
 
 void destroy() {
@@ -907,6 +1092,7 @@ void destroy() {
 	//shaderTerrain.destroy();
 	shaderDepth.destroy();
 	shaderViewDepth.destroy();
+	//shaderParticlesBurner.destroy();
 
 	// Basic objects Delete
 	skyboxSphere.destroy();
@@ -927,15 +1113,28 @@ void destroy() {
 	// Custom objects Delete
 	
 	modelBurnersTable.destroy();
+	modelBurners.destroy();
 	modelChoppingTable.destroy();
+	modelTable.destroy();
 	modelDishesTable.destroy();
+	modelDishes.destroy();
+	modelDish.destroy();
 	modelIngredientsTable.destroy();
+	modelIngredientsTableCarne.destroy();
+	modelCarne.destroy();
+	modelCarneCocida.destroy();
+	modelCarnePicada.destroy();
+	modelTortilla.destroy();
+	modelTortillero.destroy();
 
 	modelLamp1.destroy();
 	modelLamp2.destroy();
 	modelLampPost2.destroy();
 
 	modelFoodTruck.destroy();
+	//modelGlass.destroy();
+
+	
 
 	chefModelAnimate.destroy();
 	clienteModelAnimate.destroy();
@@ -964,6 +1163,13 @@ void destroy() {
 	// Cube Maps Delete
 	glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
 	glDeleteTextures(1, &skyboxTextureID);
+
+	//liberar datos del buffer de particulas de fuente de agua
+	/*glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glDeleteBuffers(1, &initVel);
+	glDeleteBuffers(1, &startTime);
+	glBindVertexArray(0);
+	glDeleteVertexArrays(1, &VAOParticles);*/
 }
 
 void reshapeCallback(GLFWwindow* Window, int widthRes, int heightRes) {
@@ -1011,10 +1217,25 @@ void mouseButtonCallback(GLFWwindow* window, int button, int state, int mod) {
 	}
 }
 
+bool leftclick = false;
+
 bool processInput(bool continueApplication) {
 	if (exitApp || glfwWindowShouldClose(window) != 0) {
 		return false;
 	}
+
+
+
+	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+		camera->moveFrontCamera(true, deltaTime*3);
+	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+		camera->moveFrontCamera(false, deltaTime*3);
+	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+		camera->moveRightCamera(false, deltaTime*3);
+	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+		camera->moveRightCamera(true, deltaTime*3);
+	if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS)
+		camera->mouseMoveCamera(offsetX, offsetY, deltaTime);
 
 	if (!iniciaPartida) {
 		bool presionarEnter = glfwGetKey(window, GLFW_KEY_ENTER) == GLFW_PRESS;
@@ -1105,22 +1326,247 @@ bool processInput(bool continueApplication) {
 	
 
 	// Controles de Chef
-	if (modelSelected == 0 && glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) {
-		modelMatrixChef = glm::rotate(modelMatrixChef, 0.02f, glm::vec3(0, 1, 0));
-		animationChefIndex = 2;
+	//if (modelSelected == 0 && glfwGetKey(window, GLFW_KEY_DOWN ) == GLFW_PRESS) {
+	//	if (glm::dot(glm::vec3(modelMatrixChef[2][0], modelMatrixChef[2][1], modelMatrixChef[2][2]), glm::vec3(0, 0, -1)) < 0.99f) {
+	//		modelMatrixChef = glm::rotate(modelMatrixChef, glm::pi<float>(), glm::vec3(0, 1, 0));
+	//	}
+
+	//	glm::vec3 right = glm::vec3(modelMatrixChef[0][0], modelMatrixChef[0][1], modelMatrixChef[0][2]);
+	//	// Mover el modelo hacia la izquierda
+	//	modelMatrixChef = glm::translate(modelMatrixChef, -0.05f * right);
+	//	animationChefIndex = 2;
+	//}
+	//else if (modelSelected == 0 && glfwGetKey(window, GLFW_KEY_UP ) == GLFW_PRESS) {
+	//	if (glm::dot(glm::vec3(modelMatrixChef[2][0], modelMatrixChef[2][1], modelMatrixChef[2][2]), glm::vec3(0, 0, 1)) < 0.99f) {
+	//		modelMatrixChef = glm::rotate(modelMatrixChef, glm::pi<float>(), glm::vec3(0, 1, 0));
+	//	}
+
+	//	glm::vec3 right = glm::vec3(modelMatrixChef[0][0], modelMatrixChef[0][1], modelMatrixChef[0][2]);
+	//	// Mover el modelo hacia la derecha
+	//	modelMatrixChef = glm::translate(modelMatrixChef, 0.05f * right);
+	//	animationChefIndex = 2;
+	//}
+	//if (modelSelected == 0 && glfwGetKey(window,  GLFW_KEY_LEFT) == GLFW_PRESS) {
+	//	if (glm::dot(glm::vec3(modelMatrixChef[2][0], modelMatrixChef[2][1], modelMatrixChef[2][2]), glm::vec3(0, 0, 1)) < 0.99f) {
+	//		modelMatrixChef = glm::rotate(modelMatrixChef, glm::pi<float>(), glm::vec3(0, 1, 0));
+	//	}
+	//	glm::vec3 forward = glm::vec3(modelMatrixChef[2][0], modelMatrixChef[2][1], modelMatrixChef[2][2]);
+	//	// Mover el modelo hacia adelante
+	//	modelMatrixChef = glm::translate(modelMatrixChef, -0.05f * forward);
+	//	animationChefIndex = 2;
+	//}
+	//else if (modelSelected == 0 && glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) {
+	//	if (glm::dot(glm::vec3(modelMatrixChef[2][0], modelMatrixChef[2][1], modelMatrixChef[2][2]), glm::vec3(0, 0, -1)) < 0.99f) {
+	//		modelMatrixChef = glm::rotate(modelMatrixChef, glm::half_pi<float>(), glm::vec3(0, 1, 0));
+	//	}
+	//	glm::vec3 forward = glm::vec3(modelMatrixChef[2][0], modelMatrixChef[2][1], modelMatrixChef[2][2]);
+	//	// Mover el modelo hacia atrás
+	//	modelMatrixChef = glm::translate(modelMatrixChef, 0.05f * forward);
+	//	animationChefIndex = 2;
+	//}
+
+	if ( glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) {
+		
+
+		modelMatrixChef = glm::rotate(modelMatrixChef, 0.1f, glm::vec3(0, 1, 0));
+		if (pickCarne == true) {
+			modelMatrixCarne = glm::translate(modelMatrixChef, glm::vec3(1.0, 1.9, 0.0));
+			modelMatrixCarne = scale(modelMatrixCarne, glm::vec3(0.5, 0.5, 0.5));
+			animationChefIndex = 4;
+		}
+		else if (carneComal == true) {
+			modelMatrixCarneCocida = glm::translate(modelMatrixBurners, glm::vec3(1.0, 4.5, 13.0));
+			animationChefIndex = 3;
+		}else if (pickCarneCocida == true) {
+			modelMatrixCarneCocida = glm::translate(modelMatrixChef, glm::vec3(1.0, 1.9, 0.0));
+			modelMatrixCarneCocida = scale(modelMatrixCarneCocida, glm::vec3(0.25, 0.25, 0.25));
+			animationChefIndex = 4;
+		}
+		else if (carneChop == true) {
+			modelMatrixCarnePicada = glm::translate(modelMatrixTable, glm::vec3(0.0, 0.0, 0.0));
+			animationChefIndex = 3;
+		}
+		else if (pickCarnePicada == true) {
+			modelMatrixCarnePicada = glm::translate(modelMatrixChef, glm::vec3(1.0, 1.9, 0.0));
+			modelMatrixCarnePicada = scale(modelMatrixCarnePicada, glm::vec3(0.25, 0.25, 0.25));
+			animationChefIndex = 4;
+		}
+		else {
+			animationChefIndex = 3;
+		}
+		if (pickPlato == true) {
+			modelMatrixDish = glm::translate(modelMatrixChef, glm::vec3(1.0, 1.9, 0.0));
+			modelMatrixDish = scale(modelMatrixDish, glm::vec3(0.25, 0.25, 0.25));
+			animationChefIndex = 4;
+		}
+		if (pickTortilla == true) {
+			modelMatrixTortilla = glm::translate(modelMatrixChef, glm::vec3(1.0, 1.9, 0.0));
+			modelMatrixTortilla = scale(modelMatrixTortilla, glm::vec3(0.25, 0.25, 0.25));
+			animationChefIndex = 4;
+		}
 	}
-	else if (modelSelected == 0 && glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) {
-		modelMatrixChef = glm::rotate(modelMatrixChef, -0.02f, glm::vec3(0, 1, 0));
-		animationChefIndex = 2;
+	else if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) {
+		modelMatrixChef = glm::rotate(modelMatrixChef, -0.1f, glm::vec3(0, 1, 0));
+		if (pickCarne == true) {
+			modelMatrixCarne = glm::translate(modelMatrixChef, glm::vec3(1.0, 1.9, 0.0));
+			modelMatrixCarne = scale(modelMatrixCarne, glm::vec3(0.5, 0.5, 0.5));
+			animationChefIndex = 4;
+		}
+		else if (carneComal == true) {
+			modelMatrixCarneCocida = glm::translate(modelMatrixBurners, glm::vec3(1.0, 4.5, 13.0));
+			animationChefIndex = 3;
+		}else if (pickCarneCocida == true) {
+			modelMatrixCarneCocida = glm::translate(modelMatrixChef, glm::vec3(1.0, 1.9, 0.0));
+			modelMatrixCarneCocida = scale(modelMatrixCarneCocida, glm::vec3(0.25, 0.25, 0.25));
+			animationChefIndex = 4;
+		}
+		else if (carneChop == true) {
+			modelMatrixCarnePicada = glm::translate(modelMatrixTable, glm::vec3(0.0, 0.0, 0.0));
+			animationChefIndex = 3;
+		}
+		else if (pickCarnePicada == true) {
+			modelMatrixCarnePicada = glm::translate(modelMatrixChef, glm::vec3(1.0, 1.9, 0.0));
+			modelMatrixCarnePicada = scale(modelMatrixCarnePicada, glm::vec3(0.25, 0.25, 0.25));
+			animationChefIndex = 4;
+		}
+		else {
+			animationChefIndex = 3;
+		}
+		if (pickPlato == true) {
+			modelMatrixDish = glm::translate(modelMatrixChef, glm::vec3(1.0, 1.9, 0.0));
+			modelMatrixDish = scale(modelMatrixDish, glm::vec3(0.25, 0.25, 0.25));
+			animationChefIndex = 4;
+		}
+		if (pickTortilla == true) {
+			modelMatrixTortilla = glm::translate(modelMatrixChef, glm::vec3(1.0, 1.9, 0.0));
+			modelMatrixTortilla = scale(modelMatrixTortilla, glm::vec3(0.25, 0.25, 0.25));
+			animationChefIndex = 4;
+		}
 	}
-	if (modelSelected == 0 && glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
-		modelMatrixChef = glm::translate(modelMatrixChef, glm::vec3(0.05, 0.0, 0.0));
-		animationChefIndex = 2;
+	if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
+		modelMatrixChef = glm::translate(modelMatrixChef, glm::vec3(0.3, 0.0, 0.0));
+		if (pickCarne == true) {
+			modelMatrixCarne = glm::translate(modelMatrixChef, glm::vec3(1.0, 1.9, 0.0));
+
+			modelMatrixCarne = scale(modelMatrixCarne, glm::vec3(0.5, 0.5, 0.5));
+			animationChefIndex = 4;
+		}
+		else if (carneComal == true) {
+			modelMatrixCarneCocida = glm::translate(modelMatrixBurners, glm::vec3(1.0, 4.5, 13.0));
+			animationChefIndex = 3;
+		}else if (pickCarneCocida == true) {
+			modelMatrixCarneCocida = glm::translate(modelMatrixChef, glm::vec3(1.0, 1.9, 0.0));
+
+			modelMatrixCarneCocida = scale(modelMatrixCarneCocida, glm::vec3(0.25, 0.25, 0.25));
+			animationChefIndex = 4;
+		}
+		else if (carneChop == true) {
+			modelMatrixCarnePicada = glm::translate(modelMatrixTable, glm::vec3(0.0, 0.0, 0.0));
+			animationChefIndex = 3;
+		}
+		else if (pickCarnePicada == true) {
+			modelMatrixCarnePicada = glm::translate(modelMatrixChef, glm::vec3(1.0, 1.9, 0.0));
+			modelMatrixCarnePicada = scale(modelMatrixCarnePicada, glm::vec3(0.25, 0.25, 0.25));
+			animationChefIndex = 4;
+		}
+		else {
+			animationChefIndex = 3;
+		}
+		if (pickPlato == true) {
+			modelMatrixDish = glm::translate(modelMatrixChef, glm::vec3(1.0, 1.9, 0.0));
+			modelMatrixDish = scale(modelMatrixDish, glm::vec3(0.25, 0.25, 0.25));
+			animationChefIndex = 4;
+		}
+		if (pickTortilla == true) {
+			modelMatrixTortilla = glm::translate(modelMatrixChef, glm::vec3(1.0, 1.9, 0.0));
+			modelMatrixTortilla = scale(modelMatrixTortilla, glm::vec3(0.25, 0.25, 0.25));
+			animationChefIndex = 4;
+		}
 	}
-	else if (modelSelected == 0 && glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
-		modelMatrixChef = glm::translate(modelMatrixChef, glm::vec3(-0.05, 0.0, 0.0));
-		animationChefIndex = 2;
+	else if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
+		modelMatrixChef = glm::translate(modelMatrixChef, glm::vec3(-0.3, 0.0, 0.0));
+		if (pickCarne == true) {
+			modelMatrixCarne = glm::translate(modelMatrixChef, glm::vec3(1.0, 1.9, 0.0));
+			modelMatrixCarne = scale(modelMatrixCarne, glm::vec3(0.5, 0.5, 0.5));
+			animationChefIndex = 4;
+		}else if (carneComal == true) {
+			modelMatrixCarneCocida = glm::translate(modelMatrixBurners, glm::vec3(1.0, 4.5, 13.0));
+			animationChefIndex = 3;
+		}
+		else if (pickCarneCocida == true) {
+			modelMatrixCarneCocida = glm::translate(modelMatrixChef, glm::vec3(1.0, 1.9, 0.0));			
+			modelMatrixCarneCocida = scale(modelMatrixCarneCocida, glm::vec3(0.25, 0.25, 0.25));
+			animationChefIndex = 4;
+		}
+		else if (carneChop == true) {
+			modelMatrixCarnePicada = glm::translate(modelMatrixTable, glm::vec3(0.0, 0.0, 0.0));
+			animationChefIndex = 3;
+		}
+		else if (pickCarnePicada == true) {
+			modelMatrixCarnePicada = glm::translate(modelMatrixChef, glm::vec3(1.0, 1.9, 0.0));
+			modelMatrixCarnePicada = scale(modelMatrixCarnePicada, glm::vec3(0.25, 0.25, 0.25));
+			animationChefIndex = 4;
+		}
+		else {
+			animationChefIndex = 3;
+		}
+		if (pickPlato == true) {
+			modelMatrixDish = glm::translate(modelMatrixChef, glm::vec3(1.0, 1.9, 0.0));
+			modelMatrixDish = scale(modelMatrixDish, glm::vec3(0.25, 0.25, 0.25));
+			animationChefIndex = 4;
+		}
+		if (pickTortilla == true) {
+			modelMatrixTortilla = glm::translate(modelMatrixChef, glm::vec3(1.0, 1.9, 0.0));
+			modelMatrixTortilla = scale(modelMatrixTortilla, glm::vec3(0.25, 0.25, 0.25));
+			animationChefIndex = 4;
+		}
 	}
+	
+	if (carneComal == true) {
+		modelMatrixCarneCocida = glm::translate(modelMatrixBurners, glm::vec3(1.0, 4.5, 13.0));
+		//modelMatrixCarneCocida = scale(modelMatrixCarne, glm::vec3(0.8, 0.8, 0.8));
+		
+	}
+	if (pickCarneCocida == true) {
+		modelMatrixCarneCocida = glm::translate(modelMatrixChef, glm::vec3(1.0, 1.9, 0.0));
+		modelMatrixCarneCocida = scale(modelMatrixCarneCocida, glm::vec3(0.5, 0.5, 0.5));
+		animationChefIndex = 4;
+		std::cout << "****************** 5 ******************" << std::endl;
+		pickCarneCocida = true;
+	}
+
+	if (carneChop == true) {
+		modelMatrixCarnePicada = glm::translate(modelMatrixTable, glm::vec3(1.5,3.0,-13.7));
+		modelMatrixCarnePicada = scale(modelMatrixCarnePicada, glm::vec3(0.35, 0.35, 0.35));
+		carneChop = true;
+	}
+	if (pickCarnePicada == true) {
+		modelMatrixCarnePicada = glm::translate(modelMatrixChef, glm::vec3(1.0, 1.85, 0.0));
+		modelMatrixCarnePicada = scale(modelMatrixCarnePicada, glm::vec3(0.175, 0.175, 0.175));
+		animationChefIndex = 4;
+		std::cout << "****************** 7 ******************" << std::endl;
+		pickCarnePicada = true;
+	}
+	if (pickPlato == true) {
+		modelMatrixDish = glm::translate(modelMatrixChef, glm::vec3(1.0, 1.8, 0.0));
+		modelMatrixDish = scale(modelMatrixDish, glm::vec3(1.0,1.0,1.0));
+		animationChefIndex = 4;
+		std::cout << "****************** 11 ******************" << std::endl;
+		pickPlato = true;
+	}
+	if (pickTortilla == true) {
+		modelMatrixTortilla = glm::translate(modelMatrixChef, glm::vec3(1.0, 1.9, 0.0));
+		modelMatrixTortilla = scale(modelMatrixTortilla, glm::vec3(0.5,0.5,0.5));
+		animationChefIndex = 4;
+		std::cout << "****************** 13 ******************" << std::endl;
+		pickTortilla = true;
+	}
+
+	if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS)
+		isPicking = true;
+	if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_RELEASE)
+		isPicking = false;
+
 
 	bool keySpaceStatus = glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS;
 	if (!isJump && keySpaceStatus) {
@@ -1139,10 +1585,21 @@ void prepareScene() {
 
 	//modelRock.setShader(&shaderMulLighting);
 	modelFoodTruck.setShader(&shaderMulLighting);
+	//modelGlass.setShader(&shaderMulLighting);
 	modelBurnersTable.setShader(&shaderMulLighting);
+	modelBurners.setShader(&shaderMulLighting);
 	modelChoppingTable.setShader(&shaderMulLighting);
+	modelTable.setShader(&shaderMulLighting);
 	modelDishesTable.setShader(&shaderMulLighting);
+	modelDishes.setShader(&shaderMulLighting);
+	modelDish.setShader(&shaderMulLighting);
 	modelIngredientsTable.setShader(&shaderMulLighting);
+	modelIngredientsTableCarne.setShader(&shaderMulLighting);
+	modelCarne.setShader(&shaderMulLighting);
+	modelCarneCocida.setShader(&shaderMulLighting);
+	modelCarnePicada.setShader(&shaderMulLighting);
+	modelTortilla.setShader(&shaderMulLighting);
+	modelTortillero.setShader(&shaderMulLighting);
 
 	
 
@@ -1168,10 +1625,21 @@ void prepareDepthScene() {
 
 	//modelRock.setShader(&shaderDepth);
 	modelFoodTruck.setShader(&shaderDepth);
+	//modelGlass.setShader(&shaderDepth);
 	modelBurnersTable.setShader(&shaderDepth);
+	modelBurners.setShader(&shaderDepth);
 	modelChoppingTable.setShader(&shaderDepth);
+	modelTable.setShader(&shaderDepth);
 	modelDishesTable.setShader(&shaderDepth);
+	modelDishes.setShader(&shaderDepth);
+	modelDish.setShader(&shaderDepth);
 	modelIngredientsTable.setShader(&shaderDepth);
+	modelIngredientsTableCarne.setShader(&shaderDepth);
+	modelCarne.setShader(&shaderDepth);
+	modelCarneCocida.setShader(&shaderDepth);
+	modelCarnePicada.setShader(&shaderDepth);
+	modelTortilla.setShader(&shaderDepth);
+	modelTortillero.setShader(&shaderDepth);
 
 	
 
@@ -1204,9 +1672,14 @@ void renderSolidScene() {
 
 	modelFoodTruck.render(modelMatrixFoodTruck);
 	modelBurnersTable.render(modelMatrixBurnersTable);
+	modelBurners.render(modelMatrixBurners);
 	modelChoppingTable.render(modelMatrixChoppingTable);
+	modelTable.render(modelMatrixTable);
 	modelDishesTable.render(modelMatrixDishesTable);
+	modelDishes.render(modelMatrixDishes);
 	modelIngredientsTable.render(modelMatrixIngredientsTable);
+	modelIngredientsTableCarne.render(modelMatrixIngredientsTableCarne);
+	modelTortillero.render(modelMatrixTortillero);
 
 
 	// Render lamp
@@ -1229,22 +1702,85 @@ void renderSolidScene() {
 	//	modelLampPost2.render();
 	//}
 
-	
+	if (pickCarne==true && ordenEntregada == false) {
+		//modelCarne.setPosition(glm::vec3(modelMatrixChef[3]));
+		//modelMatrixCarne = glm::translate(modelMatrixCarne, glm::vec3(1.0, 0.5, 0.1));
+		modelCarne.render(modelMatrixCarne);
+		pickCarne = true;
+	}
+
+	if (carneComal == true && ordenEntregada == false) {
+		modelCarneCocida.render(modelMatrixCarneCocida);
+		carneComal = true;
+		count++;
+		//std::this_thread::sleep_for(std::chrono::milliseconds(500));
+	}
+
+	if (pickCarneCocida == true && ordenEntregada == false) {
+		modelCarneCocida.render(modelMatrixCarneCocida);
+		//std::cout << "****************** 4 ******************" << std::endl;
+		pickCarneCocida = true;
+	}
+
+	if (carneChop == true && ordenEntregada == false) {
+		modelCarnePicada.render(modelMatrixCarnePicada);
+		carneChop = true;
+		count++;
+		
+	}
+	if (pickCarnePicada == true && ordenEntregada == false) {
+		modelCarnePicada.render(modelMatrixCarnePicada);
+		std::cout << "****************** 8 ******************" << std::endl;
+		ordenPreparada[1] = 1.0f;
+		pickCarnePicada = true;
+	}
+	if (pickPlato == true && ordenEntregada == false) {
+		modelDish.render(modelMatrixDish);
+		std::cout << "****************** 12 ******************" << std::endl;
+		ordenPreparada[0] = ordenPreparada[0] + 0.5f;
+		pickPlato = true;
+	}
+	if (pickTortilla == true && ordenEntregada == false) {
+		modelTortilla.render(modelMatrixTortilla);
+		std::cout << "****************** 12 ******************" << std::endl;
+		ordenPreparada[0] = ordenPreparada[0] + 0.5f;
+		pickTortilla = true;
+	}
 
 	//Chef
 	glm::mat4 modelMatrixChefBody = glm::mat4(modelMatrixChef);
 	modelMatrixChefBody = glm::scale(modelMatrixChefBody, glm::vec3(0.007f));
 	chefModelAnimate.setAnimationIndex(animationChefIndex);
 	chefModelAnimate.render(modelMatrixChefBody);
+
+	
+
+
+	//std::cout << "chef pos x " << modelMatrixChef[3][0] << std::endl;
+	//std::cout << "chef pos z " << modelMatrixChef[3][2] << std::endl;
+
+	/*float chefPositionX = modelMatrixChef[3][0];
+	float chefPositionZ = modelMatrixChef[3][2];
+
+	if (chefPositionX < -1.0 && (chefPositionZ > 5.0 && chefPositionZ < 6.0) && 
+		(lastMousePosX > 770 && lastMousePosX < 839) && (lastMousePosY > 469 && lastMousePosY < 564)) {
+
+		std::cout << "carne " <<  std::endl;
+
+	}*/
+
+
+	//std::cout << "lastMousePos.y:" << lastMousePosY << std::endl;
+
 	//animationChefIndex = 1;
 
-	// Cliente
+	 //Cliente
 	glm::mat4 modelMatrixClienteBody = glm::mat4(modelMatrixCliente);
-	modelMatrixClienteBody = glm::scale(modelMatrixClienteBody, glm::vec3(0.007f));
+	modelMatrixClienteBody = glm::scale(modelMatrixClienteBody, glm::vec3(0.01f));
 	clienteModelAnimate.setAnimationIndex(animationClienteIndex);
 	clienteModelAnimate.render(modelMatrixClienteBody);
 
-
+	//animationClienteIndex = 4;
 	/*******************************************
 	* Calle
 	*******************************************/
@@ -1325,19 +1861,50 @@ void renderSolidScene() {
 	skyboxSphere.render();
 	glCullFace(oldCullFaceMode);
 	glDepthFunc(oldDepthFuncMode);
+
+	shaderTexture.setMatrix4("projection", 1, false, glm::value_ptr(glm::mat4(1.0)));
+	shaderTexture.setMatrix4("view", 1, false, glm::value_ptr(glm::mat4(1.0)));
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, textureActivaID);
+	shaderTexture.setInt("outTexture", 0);
+	glEnable(GL_BLEND);
+	boxIntro.render();
+	glDisable(GL_BLEND);
+
+	std::string ordenTexto1;
+	std::string ordenTexto2;
+
+	//if (ordenCliente[0] == 1.0f) 
+	//	ordenTexto1 = "con cebolla";
+	//else
+	//	ordenTexto1 = "";
+
+	//if (ordenCliente[1] == 1.0f)
+	//	ordenTexto2 = "con cilantro";
+	//else
+	//	ordenTexto2 = "";
+
+	modelText1->render("Orden",					-0.9, 0.9, 1, 0, 0, 24); // izquierda medio
+	modelText2->render("1 Taco",				-0.9, 0.8, 1, 0, 0, 24);
+	//modelText3->render(ordenTexto1,				-0.9, 0.7, 1, 0, 0, 24); //izquierda abajo
+	//modelText4->render(ordenTexto2,				-0.9,  0.6, 1, 0, 0, 24); //centro abajo
+
 }
 
-void renderAlphaScene(bool render = true) {
+void renderAlphaScene(bool render ) {
 	/**********Render de transparencias***************/
 	/**********
 	 * Update the position with alpha objects
 	 */
 	 // Update the aircraft
 	//blendingUnsorted.find("aircraft")->second = glm::vec3(modelMatrixAircraft[3]);
+	//blendingUnsorted.find("glass")->second = glm::vec3(modelMatrixGlass[3]);
 	//// Update the lambo
 	//blendingUnsorted.find("lambo")->second = glm::vec3(modelMatrixLambo[3]);
 	//// Update the helicopter
 	//blendingUnsorted.find("heli")->second = glm::vec3(modelMatrixHeli[3]);
+
+	//blendingUnsorted.find("burner")->second = glm::vec3(modelMatrixBurnersTable[3]);
 
 	/**********
 	 * Sorter with alpha objects
@@ -1352,41 +1919,26 @@ void renderAlphaScene(bool render = true) {
 	/**********
 	 * Render de las transparencias
 	 */
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glDisable(GL_CULL_FACE);
-	for (std::map<float, std::pair<std::string, glm::vec3> >::reverse_iterator it = blendingSorted.rbegin(); it != blendingSorted.rend(); it++) {
-		if (it->second.first.compare("aircraft") == 0) {
-			
-		}
-		else if (it->second.first.compare("lambo") == 0) {
-			
-		}
-		else if (it->second.first.compare("heli") == 0) {
-			
-		}
-	}
-	glEnable(GL_CULL_FACE);
-	glDisable(GL_BLEND);
+	
 
-	if (render) {
-		/************Render de imagen de frente**************/
-		shaderTexture.setMatrix4("projection", 1, false, glm::value_ptr(glm::mat4(1.0)));
-		shaderTexture.setMatrix4("view", 1, false, glm::value_ptr(glm::mat4(1.0)));
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, textureActivaID);
-		shaderTexture.setInt("outTexture", 0);
-		glEnable(GL_BLEND);
-		boxIntro.render();
-		glDisable(GL_BLEND);
+	//if (render) {
+	//	/************Render de imagen de frente**************/
+	//	shaderTexture.setMatrix4("projection", 1, false, glm::value_ptr(glm::mat4(1.0)));
+	//	shaderTexture.setMatrix4("view", 1, false, glm::value_ptr(glm::mat4(1.0)));
+	//	glActiveTexture(GL_TEXTURE0);
+	//	glBindTexture(GL_TEXTURE_2D, textureActivaID);
+	//	shaderTexture.setInt("outTexture", 0);
+	//	glEnable(GL_BLEND);
+	//	boxIntro.render();
+	//	glDisable(GL_BLEND);
 
-		modelText->render("Texto en OpenGL", -1, 0, 1, 0, 0, 24);
-	}
+	//	modelText->render("Texto en OpenGL", -1, 0, 1, 0, 0, 24);
+	//}
 }
 
 void renderScene() {
 	renderSolidScene();
-	renderAlphaScene(false);
+	renderAlphaScene(true);
 }
 
 void applicationLoop() {
@@ -1409,29 +1961,66 @@ void applicationLoop() {
 	modelMatrixFoodTruck = glm::translate(modelMatrixFoodTruck, glm::vec3(1.0, 0.0, 1.0));
 	modelMatrixFoodTruck = glm::scale(modelMatrixFoodTruck, glm::vec3(0.5, 0.5, 0.5));
 
+	modelMatrixGlass = glm::translate(modelMatrixGlass, glm::vec3(1.0, 1.0, 1.0));
+	modelMatrixGlass = glm::scale(modelMatrixGlass, glm::vec3(10.0,10.0,10.0));
+
 	modelMatrixBurnersTable = glm::translate(modelMatrixBurnersTable, glm::vec3(1.0, -0.3, 1.0));
 	modelMatrixBurnersTable = glm::scale(modelMatrixBurnersTable, glm::vec3(0.5, 0.5, 0.5));
+
+	modelMatrixBurners = glm::translate(modelMatrixBurners, glm::vec3(1.0, -0.3, 1.0));
+	modelMatrixBurners = glm::scale(modelMatrixBurners, glm::vec3(0.5, 0.5, 0.5));
 
 	modelMatrixChoppingTable = glm::translate(modelMatrixChoppingTable, glm::vec3(1.0, 0.1, 1.0));
 	modelMatrixChoppingTable = glm::scale(modelMatrixChoppingTable, glm::vec3(0.5, 0.5, 0.5));
 
+	modelMatrixTable = glm::translate(modelMatrixTable, glm::vec3(1.0, 0.1, 1.0));
+	modelMatrixTable = glm::scale(modelMatrixTable, glm::vec3(0.5, 0.5, 0.5));
+
 	modelMatrixDishesTable = glm::translate(modelMatrixDishesTable, glm::vec3(1.0, 0.0, 1.0));
 	modelMatrixDishesTable = glm::scale(modelMatrixDishesTable, glm::vec3(0.5, 0.5, 0.5));
+
+	modelMatrixDishes = glm::translate(modelMatrixDishes, glm::vec3(1.0, 0.0, 1.0));
+	modelMatrixDishes = glm::scale(modelMatrixDishes, glm::vec3(0.5, 0.5, 0.5));
+
+	modelMatrixDish = glm::translate(modelMatrixDish, glm::vec3(1.0, 0.0, 1.0));
+	modelMatrixDish = glm::scale(modelMatrixDish, glm::vec3(1.0, 1.0, 1.0));
 
 	modelMatrixIngredientsTable = glm::translate(modelMatrixIngredientsTable, glm::vec3(1.0, 0.0, 1.0));
 	modelMatrixIngredientsTable = glm::scale(modelMatrixIngredientsTable, glm::vec3(0.5, 0.5, 0.5));
 
+	modelMatrixIngredientsTableCarne = glm::translate(modelMatrixIngredientsTableCarne, glm::vec3(1.0, 0.0, 1.0));
+	modelMatrixIngredientsTableCarne = glm::scale(modelMatrixIngredientsTableCarne, glm::vec3(0.5, 0.5, 0.5));
+
+	
+	modelMatrixCarne = glm::translate(modelMatrixCarne, glm::vec3(-1.9, 2.2, 5.6));
+	modelMatrixCarne = glm::scale(modelMatrixCarne, glm::vec3(0.5, 0.5, 0.5));
+	modelMatrixCarne = glm::rotate(modelMatrixCarne, glm::radians(90.0f), glm::vec3(0, 1, 0));
+
+	modelMatrixCarneCocida = glm::translate(modelMatrixCarneCocida, glm::vec3(-1.9, 2.2, 0.6));
+	modelMatrixCarneCocida = glm::scale(modelMatrixCarneCocida, glm::vec3(0.5, 0.5, 0.5));
+	//modelMatrixCarneCocida = glm::rotate(modelMatrixCarneCocida, glm::radians(90.0f), glm::vec3(0, 1, 0));
+
+	modelMatrixCarnePicada = glm::translate(modelMatrixCarnePicada, glm::vec3(-1.9, 2.2, 0.6));
+	modelMatrixCarnePicada = glm::scale(modelMatrixCarnePicada, glm::vec3(0.5, 0.5, 0.5));
+
+	modelMatrixTortilla = glm::translate(modelMatrixTortilla, glm::vec3(1.0, 0.0, 1.0));
+	modelMatrixTortilla = glm::scale(modelMatrixTortilla, glm::vec3(0.5,0.5,0.5));
+
+	modelMatrixTortillero = glm::translate(modelMatrixTortillero, glm::vec3(1.0, 0.0, 1.0));
+	modelMatrixTortillero = glm::scale(modelMatrixTortillero, glm::vec3(0.5, 0.5, 0.5));
 
 	modelMatrixChef = glm::translate(modelMatrixChef, glm::vec3(1.0f, 0.5f, 0.1f));
 
-	modelMatrixCliente = glm::translate(modelMatrixCliente, glm::vec3(15.0f, 1.0f, 0.1f));
+	modelMatrixCliente = glm::translate(modelMatrixCliente, glm::vec3(9.0f, 0.3f, 0.0f));
+	modelMatrixCliente = glm::rotate(modelMatrixCliente, glm::radians(180.0f), glm::vec3(0, 1, 0));
+	modelMatrixCliente = glm::scale(modelMatrixCliente, glm::vec3(1.2,1.2,1.2));
 
 	// Variables to interpolation key frames
 	fileName = "../animaciones/animation_dart_joints.txt";
-	keyFramesDartJoints = getKeyRotFrames(fileName);
-	keyFramesDart = getKeyFrames("../animaciones/animation_dart.txt");
-	keyFramesBuzzJoints = getKeyRotFrames("../animaciones/animation_buzz_joints.txt");
-	keyFramesBuzz = getKeyFrames("../animaciones/animation_buzz.txt");
+	//keyFramesDartJoints = getKeyRotFrames(fileName);
+	//keyFramesDart = getKeyFrames("../animaciones/animation_dart.txt");
+	//keyFramesBuzzJoints = getKeyRotFrames("../animaciones/animation_buzz_joints.txt");
+	//keyFramesBuzz = getKeyFrames("../animaciones/animation_buzz.txt");
 
 	lastTime = TimeManager::Instance().GetTime();
 
@@ -1440,6 +2029,20 @@ void applicationLoop() {
 	glm::vec3 lightPos = glm::vec3(10.0, 10.0, -10.0);
 
 	shadowBox = new ShadowBox(-lightPos, camera.get(), 15.0f, 0.1, 45.0f);
+
+	glm::vec4 miVec(1.0f, 1.0f, 0.0f, 0.0f);
+
+	// Inicializar el generador de números aleatorios
+	std::random_device rd;  // Fuente de entropía
+	std::mt19937 gen(rd()); // Generador de números pseudoaleatorios
+	std::uniform_int_distribution<> dis(0, 1);
+
+	//// Orden inicial
+
+	ordenCliente[0] = 1.0f;
+	ordenCliente[1] = 1.0f;
+	//ordenCliente[2] = dis(gen);
+	//ordenCliente[3] = dis(gen);
 
 	while (psi) {
 		currTime = TimeManager::Instance().GetTime();
@@ -1522,6 +2125,9 @@ void applicationLoop() {
 			glm::value_ptr(projection));
 		shaderTerrain.setMatrix4("view", 1, false,
 			glm::value_ptr(view));*/
+
+		/*shaderParticlesBurner.setMatrix4("projection", 1, false, glm::value_ptr(projection));
+		shaderParticlesBurner.setMatrix4("view", 1, false, glm::value_ptr(view));*/
 
 		/*******************************************
 		 * Propiedades de neblina
@@ -1624,6 +2230,39 @@ void applicationLoop() {
 		//	shaderTerrain.setFloat("pointLights[" + std::to_string(lamp1Position.size() + i) + "].quadratic", 0.02);*/
 		//}
 
+		if (ordenEntregada == true) {
+			//orden entegada es que ya se entrego al cliente
+			std::cout << "cliente " << ordenCliente[0]  << std::endl;
+			std::cout << "cliente " << ordenCliente[1]  << std::endl;
+			/*std::cout << "cliente " << ordenCliente[2]  << std::endl;
+			std::cout << "cliente " << ordenCliente[3]  << std::endl;*/
+			std::cout << "preparada " << ordenPreparada[0]  << std::endl;
+			std::cout << "preparada " << ordenPreparada[1]  << std::endl;
+			/*std::cout << "preparada " << ordenPreparada[2]  << std::endl;
+			std::cout << "preparada " << ordenPreparada[3]  << std::endl;*/
+
+
+			if (ordenCliente == ordenPreparada) {
+				animationClienteIndex = 4;
+			}
+			else {
+				animationClienteIndex = 5;
+			}
+			ordenEntregada = false;
+			/*ordenCliente[2] = dis(gen);
+			ordenCliente[3] = dis(gen);*/
+			ordenPreparada = glm::vec2(0.0);
+		}
+
+		//if (ordenTerminada == true) {
+		//	ordenCliente[0] = 1.0f;
+		//	ordenCliente[1] = 1.0f;
+		//	ordenCliente[2] = dis(gen);
+		//	ordenCliente[3] = dis(gen);
+		//	ordenTerminada = false;
+		//}
+
+
 		/************Render de imagen de frente**************/
 		if (!iniciaPartida) {
 			shaderTexture.setMatrix4("projection", 1, false, glm::value_ptr(glm::mat4(1.0)));
@@ -1670,6 +2309,8 @@ void applicationLoop() {
 		//shaderTerrain.setInt("shadowMap", 10);
 		renderSolidScene();
 
+
+
 		/*******************************************
 		 * Creacion de colliders
 		 * IMPORTANT do this before interpolations
@@ -1683,7 +2324,16 @@ void applicationLoop() {
 		modelMatrixColliderDishesTable = glm::translate(modelMatrixColliderDishesTable, glm::vec3(15.0, 140.0, -1.0));
 		dishesTableCollider.c = glm::vec3(modelMatrixColliderDishesTable[3]);
 		dishesTableCollider.e = modelDishesTable.getObb().e * glm::vec3(0.5,0.02,0.47);
-		addOrUpdateColliders(collidersOBB, "dishes", dishesTableCollider, modelMatrixDishesTable);
+		addOrUpdateColliders(collidersOBB, "dishesTable", dishesTableCollider, modelMatrixDishesTable);
+
+		AbstractModel::OBB dishesCollider;
+		glm::mat4 modelMatrixColliderDishes = glm::mat4(modelMatrixDishes);
+		dishesCollider.u = glm::quat_cast(modelMatrixDishes);
+		modelMatrixColliderDishes = glm::scale(modelMatrixColliderDishes, glm::vec3(0.35,0.35,0.35));
+		modelMatrixColliderDishes = glm::translate(modelMatrixColliderDishes, glm::vec3(22.5,9.5,-17.5));
+		dishesCollider.c = glm::vec3(modelMatrixColliderDishes[3]);
+		dishesCollider.e = modelDishes.getObb().e * glm::vec3(0.35, 0.35, 0.35);
+		addOrUpdateColliders(collidersOBB, "dishes", dishesCollider, modelMatrixDishes);
 
 		AbstractModel::OBB choppingTableCollider;
 		glm::mat4 modelMatrixColliderChoppingTable = glm::mat4(modelMatrixChoppingTable);
@@ -1694,25 +2344,61 @@ void applicationLoop() {
 		choppingTableCollider.e = modelChoppingTable.getObb().e * glm::vec3(0.4, 0.02, 0.47);
 		addOrUpdateColliders(collidersOBB, "chopping", choppingTableCollider, modelMatrixChoppingTable);
 
+		AbstractModel::OBB tableCollider;
+		glm::mat4 modelMatrixColliderTable = glm::mat4(modelMatrixTable);
+		tableCollider.u = glm::quat_cast(modelMatrixTable);
+		modelMatrixColliderTable = glm::translate(modelMatrixColliderTable, glm::vec3(1.8, 3.11, -13.6));
+		modelMatrixColliderTable = glm::scale(modelMatrixColliderTable, glm::vec3(0.35, 0.4, 0.4));
+		tableCollider.c = glm::vec3(modelMatrixColliderTable[3]);
+		tableCollider.e = modelTable.getObb().e * glm::vec3(0.35, 0.4, 0.4);
+		addOrUpdateColliders(collidersOBB, "table", tableCollider, modelMatrixTable);
+
 		AbstractModel::OBB burnerTableCollider;
 		glm::mat4 modelMatrixColliderBurnerTable = glm::mat4(modelMatrixBurnersTable);
 		burnerTableCollider.u = glm::quat_cast(modelMatrixBurnersTable);
-		modelMatrixColliderBurnerTable = glm::scale(modelMatrixColliderBurnerTable, glm::vec3(0.4, 0.02, 0.47));
-		modelMatrixColliderBurnerTable = glm::translate(modelMatrixColliderBurnerTable, glm::vec3(0.0, 170.0, 28.0));
+		modelMatrixColliderBurnerTable = glm::scale(modelMatrixColliderBurnerTable, glm::vec3(0.4, 0.02, 0.05));
+		modelMatrixColliderBurnerTable = glm::translate(modelMatrixColliderBurnerTable, glm::vec3(0.0, 170.0, 222.8));
 		burnerTableCollider.c = glm::vec3(modelMatrixColliderBurnerTable[3]);
-		burnerTableCollider.e = modelBurnersTable.getObb().e * glm::vec3(0.4, 0.02, 0.47);
-		addOrUpdateColliders(collidersOBB, "burner", burnerTableCollider, modelMatrixBurnersTable);
+		burnerTableCollider.e = modelBurnersTable.getObb().e * glm::vec3(0.4, 0.02, 0.05);
+		addOrUpdateColliders(collidersOBB, "burnerTable", burnerTableCollider, modelMatrixBurnersTable);
+
+		AbstractModel::OBB burnerCollider;
+		glm::mat4 modelMatrixColliderBurner = glm::mat4(modelMatrixBurners);
+		burnerCollider.u = glm::quat_cast(modelMatrixBurners);
+		modelMatrixColliderBurner = glm::scale(modelMatrixColliderBurner, glm::vec3(0.3, 0.3, 0.3));
+		modelMatrixColliderBurner = glm::translate(modelMatrixColliderBurner, glm::vec3(1.0, 13.0, 44.0));
+		burnerCollider.c = glm::vec3(modelMatrixColliderBurner[3]);
+		burnerCollider.e = modelBurners.getObb().e * glm::vec3(0.3, 0.3, 0.3);
+		addOrUpdateColliders(collidersOBB, "burner", burnerCollider, modelMatrixBurners);
 
 		AbstractModel::OBB ingredientsTableCollider;
 		glm::mat4 modelMatrixColliderIngredientsTable = glm::mat4(modelMatrixIngredientsTable);
 		ingredientsTableCollider.u = glm::quat_cast(modelMatrixIngredientsTable);
-		modelMatrixColliderIngredientsTable = glm::scale(modelMatrixColliderIngredientsTable, glm::vec3(0.5, 0.02, 0.48));
-		modelMatrixColliderIngredientsTable = glm::translate(modelMatrixColliderIngredientsTable, glm::vec3(-14.2, 142.0, -1.0));
+		modelMatrixColliderIngredientsTable = glm::scale(modelMatrixColliderIngredientsTable, glm::vec3(0.05, 0.02, 0.48));
+		modelMatrixColliderIngredientsTable = glm::translate(modelMatrixColliderIngredientsTable, glm::vec3(-105.0, 142.0, -1.0));
 		ingredientsTableCollider.c = glm::vec3(modelMatrixColliderIngredientsTable[3]);
-		ingredientsTableCollider.e = modelIngredientsTable.getObb().e * glm::vec3(0.5, 0.02, 0.48);
+		ingredientsTableCollider.e = modelIngredientsTable.getObb().e * glm::vec3(0.05, 0.02, 0.48);
 		addOrUpdateColliders(collidersOBB, "ingredients", ingredientsTableCollider, modelMatrixIngredientsTable);
 
+		AbstractModel::OBB ingredientsTableColliderCarne;
+		glm::mat4 modelMatrixColliderIngredientsTableCarne = glm::mat4(modelMatrixIngredientsTableCarne);
+		ingredientsTableColliderCarne.u = glm::quat_cast(modelMatrixIngredientsTableCarne);
+		modelMatrixColliderIngredientsTableCarne = glm::scale(modelMatrixColliderIngredientsTableCarne, glm::vec3(0.5, 0.45, 0.45));
+		modelMatrixColliderIngredientsTableCarne = glm::translate(modelMatrixColliderIngredientsTableCarne, glm::vec3(-14.2, 4.3, 20.0));
+		ingredientsTableColliderCarne.c = glm::vec3(modelMatrixColliderIngredientsTableCarne[3]);
+		ingredientsTableColliderCarne.e = modelIngredientsTableCarne.getObb().e * glm::vec3(0.5, 0.45, 0.45);
+		addOrUpdateColliders(collidersOBB, "ingredientsCarne", ingredientsTableColliderCarne, modelMatrixIngredientsTableCarne);
 
+		AbstractModel::OBB TortilleroCollider;
+		glm::mat4 modelMatrixColliderTortillero = glm::mat4(modelMatrixTortillero);
+		TortilleroCollider.u = glm::quat_cast(modelMatrixTortillero);
+		modelMatrixColliderTortillero = glm::scale(modelMatrixColliderTortillero, glm::vec3(0.35, 0.45, 0.35));
+		modelMatrixColliderTortillero = glm::translate(modelMatrixColliderTortillero, glm::vec3(-20.0, 7.0, -2.0));
+		TortilleroCollider.c = glm::vec3(modelMatrixColliderTortillero[3]);
+		TortilleroCollider.e = modelTortillero.getObb().e * glm::vec3(0.35, 0.45, 0.35);
+		addOrUpdateColliders(collidersOBB, "tortillero", TortilleroCollider, modelMatrixTortillero);
+
+		
 		// Lamps1 colliders
 		//for (int i = 0; i < lamp1Position.size(); i++) {
 		//	AbstractModel::OBB lampCollider;
@@ -1759,6 +2445,25 @@ void applicationLoop() {
 		chefCollider.e = chefModelAnimate.getObb().e * glm::vec3(0.3, 0.1, 0.05) * glm::vec3(0.787401574, 0.787401574, 0.787401574);
 		chefCollider.c = glm::vec3(modelmatrixColliderChef[3]);
 		addOrUpdateColliders(collidersOBB, "chef", chefCollider, modelMatrixChef);
+
+		// Collider de Cliente
+		//AbstractModel::OBB clienteCollider;
+		//glm::mat4 modelmatrixColliderCliente = glm::mat4(modelMatrixCliente);
+		//modelmatrixColliderCliente = glm::rotate(modelmatrixColliderCliente, glm::radians(-90.0f), glm::vec3(1, 0, 0));
+		//// Set the orientation of collider before doing the scale
+		//clienteCollider.u = glm::quat_cast(modelmatrixColliderCliente);
+		//modelmatrixColliderCliente = glm::scale(modelmatrixColliderCliente, glm::vec3(1.0,1.0,1.0));
+		//modelmatrixColliderCliente = glm::translate(modelmatrixColliderCliente, glm::vec3(1.0, 1.0, 1.0));
+		//clienteCollider.e = clienteModelAnimate.getObb().e * glm::vec3(1.0, 1.0, 1.0) * glm::vec3(0.787401574, 0.787401574, 0.787401574);
+		//clienteCollider.c = glm::vec3(modelmatrixColliderCliente[3]);
+		//addOrUpdateColliders(collidersOBB, "cliente", clienteCollider, modelMatrixCliente);
+		AbstractModel::SBB clienteCollider;
+		glm::mat4 modelMatrixClienteCollider = glm::mat4(modelMatrixCliente);
+		modelMatrixClienteCollider = glm::scale(modelMatrixClienteCollider, glm::vec3(0.6));
+		modelMatrixClienteCollider = glm::translate(modelMatrixClienteCollider, glm::vec3(0.0, 3.5, 0.0));
+		clienteCollider.c = modelMatrixClienteCollider[3];
+		clienteCollider.ratio = 0.6;
+		addOrUpdateColliders(collidersSBB, "cliente", clienteCollider, modelMatrixCliente);
 
 		/*******************************************
 		 * Render de colliders
@@ -1920,14 +2625,108 @@ void applicationLoop() {
 			rotDartLeftLeg = interpolate(keyFramesDartJoints, indexFrameDartJoints, indexFrameDartJointsNext, 5, interpolationDartJoints);
 			rotDartRightLeg = interpolate(keyFramesDartJoints, indexFrameDartJoints, indexFrameDartJointsNext, 6, interpolationDartJoints);
 		}
+		std::map<std::string, std::tuple<AbstractModel::SBB, glm::mat4, glm::mat4>>::iterator itSBB1;
+		std::map<std::string, std::tuple<AbstractModel::OBB, glm::mat4, glm::mat4>>::iterator itOBB;
+
+		/********PICKING********/
+		float chefPositionX = modelMatrixChef[3][0];
+		float chefPositionZ = modelMatrixChef[3][2];
+		std::cout << "chef x : " << chefPositionX << std::endl;
+		std::cout << "chef y : " << chefPositionZ << std::endl;
+
+		if (isPicking) {
+			glm::vec4 viewPort = glm::vec4(0.0, 0.0, screenWidth, screenHeight);
+			// Otener la coordenada en 3D del plano cercano en el pixel seleccionado de la ventana.
+			glm::vec3 o = glm::unProject(glm::vec3(lastMousePosX,screenHeight - lastMousePosY,0.0f), view, projection, viewPort);
+			// Otener la coordenada en 3D del plano lejano en el pixel seleccionado de la ventana.
+			glm::vec3 t = glm::unProject(glm::vec3(lastMousePosX,screenHeight- lastMousePosY,1.0f), view, projection, viewPort); 
+			for (itOBB = collidersOBB.begin(); itOBB != collidersOBB.end(); itOBB++) {
+				if (testRayOBB(o, t, std::get<0>(itOBB->second)) && (chefPositionX < -1.0 && (chefPositionZ > 5.0 && chefPositionZ < 6.0)) && itOBB->first=="ingredientsCarne") {
+					std::cout << "Seleccionado ojeto => " << itOBB->first << std::endl;
+					std::cout << "****************** 1 ******************" << std::endl;
+					pickCarne = true;
+				}
+				else if (testRayOBB(o, t, std::get<0>(itOBB->second)) && (chefPositionX < 3.4 && chefPositionX > 0.7) && (chefPositionZ > 5.5 ) && itOBB->first == "burner" && pickCarne==true ) {
+					std::cout << "Seleccionado ojeto => " << itOBB->first << std::endl;
+					std::cout << "****************** 2 ******************" << std::endl;
+					
+					carneComal = true;
+					pickCarne = false;
+				}
+				else if (testRayOBB(o, t, std::get<0>(itOBB->second)) && (chefPositionX < 3.4 && chefPositionX > 0.7) && (chefPositionZ > 5.5) && itOBB->first == "burner" && carneComal == true && count > 10) {
+					std::cout << "Seleccionado ojeto => " << itOBB->first << std::endl;
+					std::cout << "****************** 3 ******************" << std::endl;
+					pickCarneCocida = true;
+					carneComal = false;
+					count = 0;
+				}
+				else if (testRayOBB(o, t, std::get<0>(itOBB->second)) && (chefPositionX < 3.5 && chefPositionX > 1.0) && (chefPositionZ < - 4.0) && itOBB->first == "table" && pickCarneCocida == true ) {
+					std::cout << "Seleccionado ojeto => " << itOBB->first << std::endl;
+					std::cout << "****************** 6 ******************" << std::endl;
+					carneChop = true;
+					pickCarneCocida = false;
+				}
+				else if (testRayOBB(o, t, std::get<0>(itOBB->second)) && (chefPositionX < 3.5 && chefPositionX > 1.0) && (chefPositionZ < -4.0) && itOBB->first == "table" && carneChop == true && count > 10) {
+					std::cout << "Seleccionado ojeto => " << itOBB->first << std::endl;
+					std::cout << "****************** 9 ******************" << std::endl;
+					pickCarnePicada = true;
+					carneChop = false;
+					count = 0;
+				}
+				else if (testRayOBB(o, t, std::get<0>(itOBB->second)) && (chefPositionX > 3.0) && (chefPositionZ < -0.9 && chefPositionZ > -2.5) && itOBB->first == "dishes" ) {
+					std::cout << "Seleccionado ojeto => " << itOBB->first << std::endl;
+					std::cout << "****************** 10 ******************" << std::endl;
+					pickPlato = true;
+				}
+				else if (testRayOBB(o, t, std::get<0>(itOBB->second)) && (chefPositionX < -1.0) && (chefPositionZ < 1.1 && chefPositionZ > 0.1) && itOBB->first == "tortillero") {
+					std::cout << "Seleccionado ojeto => " << itOBB->first << std::endl;
+					std::cout << "****************** 14 ******************" << std::endl;
+					pickTortilla = true;
+				}
+				
+				else if (testRayOBB(o, t, std::get<0>(itOBB->second)))
+					std::cout << "Seleccionado ojeto => " << itOBB->first << std::endl;
+
+			}
+			for (itSBB1 = collidersSBB.begin(); itSBB1 != collidersSBB.end(); itSBB1++) {
+				float tRint;
+				if (raySphereIntersect(o, t, glm::normalize(t - o), std::get<0>(itSBB1->second), tRint) && chefPositionX > 3.0 && chefPositionZ < 1.5 && chefPositionZ > -1.1) {
+					std::cout << "Seleccionando la esfera " << itSBB1->first << std::endl;
+					ordenEntregada = true;
+				}
+			}
+			/*for (itSBB1 = collidersSBB.begin(); itSBB1 != collidersSBB.end(); itSBB1++) {
+				float tRint;
+				if (raySphereIntersect(o, t, glm::normalize(t - o), std::get<0>(itSBB1->second), tRint)) {
+					std::cout << "Seleccionando la esfera " << itSBB1->first << std::endl;
+				}
+			}*/
+		}
+
+		
+
+		
+		/*float chefPositionX = modelMatrixChef[3][0];
+	float chefPositionZ = modelMatrixChef[3][2];
+
+	if (chefPositionX < -1.0 && (chefPositionZ > 5.0 && chefPositionZ < 6.0) &&*/
+		
+		/*Maquina de estados Cliente*/
 		
 
 		// Constantes de animaciones
 		rotHelHelY += 0.5;
 		rotHelHelBack += 0.5;
 		//animationMayowIndex = 1;
-		animationChefIndex = 1;
-		animationClienteIndex = 1;
+
+		if (pickCarne) {
+			animationChefIndex = 5;
+		}
+		else {
+			animationChefIndex = 1;
+		}
+		
+		animationClienteIndex = 3;
 
 		glfwSwapBuffers(window);
 
